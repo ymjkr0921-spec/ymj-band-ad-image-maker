@@ -73,6 +73,7 @@ git push -u origin main
 ### 공유 링크와 배포 주소
 
 공유 링크는 코드에 도메인을 고정하지 않고 현재 접속 중인 `window.location.origin`을 기준으로 생성됩니다.
+Production 빌드에서는 `.env.production`의 `VITE_PUBLIC_SITE_URL`을 우선 사용하므로, Preview 또는 개별 Deployment URL에서 접속해도 공개 Production URL로 공유 링크가 생성됩니다.
 
 - 로컬 네트워크 접속: `http://192.168.x.x:5173/ad?data=...`
 - Vercel 배포 후: `https://배포주소.vercel.app/ad?data=...`

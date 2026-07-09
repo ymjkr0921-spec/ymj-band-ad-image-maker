@@ -38,7 +38,8 @@ function normalizePhone(value) {
 }
 
 function createShareLink(form) {
-  const url = new URL('/ad', window.location.origin)
+  const publicOrigin = import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin
+  const url = new URL('/ad', publicOrigin)
   url.searchParams.set('data', compressToEncodedURIComponent(JSON.stringify(form)))
   return url.toString()
 }
