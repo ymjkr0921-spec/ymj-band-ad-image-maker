@@ -3,7 +3,8 @@ import { toPng } from 'html-to-image'
 import LZString from 'lz-string'
 import { getTemplate, templates } from './templates'
 
-const { compressToEncodedURIComponent, decompressFromEncodedURIComponent } = LZString
+const { decompressFromEncodedURIComponent } = LZString
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || ''
 
 const STORAGE_KEY = 'ymj-band-ad-image-maker:form'
 
@@ -37,11 +38,23 @@ function normalizePhone(value) {
   return value.replace(/[^\d+]/g, '')
 }
 
-function createShareLink(form) {
-  const publicOrigin = import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin
-  const url = new URL('/ad', publicOrigin)
-  url.searchParams.set('data', compressToEncodedURIComponent(JSON.stringify(form)))
-  return url.toString()
+function createShortShareLink(id) {
+  const publicOrigin = API_ORIGIN || import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin
+  return new URL(`/ad/${id}`, publicOrigin).toString()
+}
+
+function createBandPost(form, shareLink) {
+  return [
+    form.highlight,
+    form.title,
+    form.body,
+    `☎ 문의: ${form.phone}`,
+    form.footer,
+    '🔗 상세보기 · 전화 · 문자',
+    shareLink,
+  ]
+    .filter(Boolean)
+    .join('\n\n')
 }
 
 function readSharedForm() {
@@ -156,6 +169,33 @@ function SharePage({ form }) {
   )
 }
 
+function RemoteSharePage({ adId }) {
+  const [state, setState] = useState({ loading: true, form: null })
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const apiUrl = `${API_ORIGIN}/api/ads/${adId}`
+
+    fetch(apiUrl, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('LOAD_FAILED')
+        return response.json()
+      })
+      .then(({ ad }) => setState({ loading: false, form: { ...defaults, ...ad } }))
+      .catch((error) => {
+        if (error.name !== 'AbortError') setState({ loading: false, form: null })
+      })
+
+    return () => controller.abort()
+  }, [adId])
+
+  if (state.loading) {
+    return <main className="share-loading">광고를 불러오는 중입니다.</main>
+  }
+
+  return state.form ? <SharePage form={state.form} /> : <InvalidSharePage />
+}
+
 function InvalidSharePage() {
   return (
     <main className="invalid-share-page">
@@ -171,29 +211,24 @@ function EditorApp() {
   const [form, setForm] = useState(loadForm)
   const [notice, setNotice] = useState('')
   const [downloading, setDownloading] = useState(false)
+  const [shareLink, setShareLink] = useState('')
+  const [savingShare, setSavingShare] = useState(false)
   const previewRef = useRef(null)
   const bodyRef = useRef(null)
 
   const cleanPhone = normalizePhone(form.phone)
   const smsHref = `sms:${cleanPhone}?body=${encodeURIComponent(form.smsMessage)}`
-  const shareLink = useMemo(() => createShareLink(form), [form])
   const bandPost = useMemo(
-    () =>
-      [
-        form.highlight,
-        form.title,
-        form.body,
-        `☎ 문의: ${form.phone}`,
-        form.footer,
-        `🔗 광고 상세보기: ${shareLink}`,
-      ]
-        .filter(Boolean)
-        .join('\n\n'),
+    () => createBandPost(form, shareLink || '짧은 공유 링크를 먼저 생성해 주세요.'),
     [form, shareLink],
   )
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(form))
+  }, [form])
+
+  useEffect(() => {
+    setShareLink('')
   }, [form])
 
   useBodyTextFit(bodyRef, `${form.body}-${form.templateId}`)
@@ -207,21 +242,56 @@ function EditorApp() {
     window.setTimeout(() => setNotice(''), 1800)
   }
 
+  const ensureShareLink = async () => {
+    if (shareLink) return shareLink
+    if (savingShare) throw new Error('SAVE_IN_PROGRESS')
+
+    setSavingShare(true)
+    try {
+      const response = await fetch(`${API_ORIGIN}/api/ads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const result = await response.json()
+      if (!response.ok || !result.id) throw new Error(result.error || 'SAVE_FAILED')
+
+      const nextLink = createShortShareLink(result.id)
+      setShareLink(nextLink)
+      return nextLink
+    } finally {
+      setSavingShare(false)
+    }
+  }
+
+  const createShare = async () => {
+    try {
+      await ensureShareLink()
+      flash('짧은 공유 링크를 만들었습니다.')
+    } catch (error) {
+      flash(error.message === '광고 저장소 연결이 필요합니다.'
+        ? error.message
+        : '공유 링크를 만들지 못했습니다.')
+    }
+  }
+
   const copyBandPost = async () => {
     try {
-      await navigator.clipboard.writeText(bandPost)
+      const link = await ensureShareLink()
+      await navigator.clipboard.writeText(createBandPost(form, link))
       flash('밴드글을 복사했습니다.')
     } catch {
-      flash('복사하지 못했습니다. 직접 선택해 주세요.')
+      flash('광고 저장 후 밴드글을 복사하지 못했습니다.')
     }
   }
 
   const copyShareLink = async () => {
     try {
-      await navigator.clipboard.writeText(shareLink)
+      const link = await ensureShareLink()
+      await navigator.clipboard.writeText(link)
       flash('공유 링크를 복사했습니다.')
     } catch {
-      flash('링크를 복사하지 못했습니다.')
+      flash('공유 링크를 만들지 못했습니다.')
     }
   }
 
@@ -361,12 +431,23 @@ function EditorApp() {
           <div className="share-link-box">
             <div>
               <strong>공유용 광고 페이지</strong>
-              <span>전화·문자 버튼이 실제로 작동합니다.</span>
+              <span>광고를 저장하면 짧은 링크가 생성됩니다.</span>
             </div>
-            <input readOnly value={shareLink} aria-label="공유용 광고 링크" />
+            <input
+              readOnly
+              value={shareLink}
+              placeholder="짧은 공유 링크를 생성해 주세요."
+              aria-label="공유용 광고 링크"
+            />
             <div className="share-link-actions">
-              <button type="button" onClick={copyShareLink}>링크 복사</button>
-              <a href={shareLink} target="_blank" rel="noreferrer">페이지 열기 ↗</a>
+              <button type="button" onClick={shareLink ? copyShareLink : createShare} disabled={savingShare}>
+                {savingShare ? '저장 중...' : shareLink ? '링크 복사' : '짧은 링크 만들기'}
+              </button>
+              {shareLink ? (
+                <a href={shareLink} target="_blank" rel="noreferrer">페이지 열기 ↗</a>
+              ) : (
+                <button type="button" onClick={createShare} disabled={savingShare}>광고 저장</button>
+              )}
             </div>
           </div>
 
@@ -376,7 +457,9 @@ function EditorApp() {
               <span>실제 전화·문자 기능이 있는 공유 링크가 포함됩니다.</span>
             </div>
             <textarea readOnly value={bandPost} rows="6" aria-label="자동 생성된 밴드글" />
-            <button type="button" onClick={copyBandPost}>▣ 밴드글 복사</button>
+            <button type="button" onClick={copyBandPost} disabled={savingShare}>
+              {savingShare ? '광고 저장 중...' : '▣ 밴드글 복사'}
+            </button>
           </div>
         </section>
       </main>
@@ -386,12 +469,19 @@ function EditorApp() {
 }
 
 function App() {
-  const isShareRoute = /^\/(ad|share)\/?$/.test(window.location.pathname)
-  const [sharedForm] = useState(() => (isShareRoute ? readSharedForm() : null))
+  const pathname = window.location.pathname
+  const shortRoute = pathname.match(/^\/(?:ad|s)\/([23456789A-HJ-NP-Za-km-z]{8})\/?$/)
+  const isLegacyShareRoute = /^\/(ad|share)\/?$/.test(pathname)
+  const isShareArea = /^\/(ad|share|s)(\/|$)/.test(pathname)
+  const [sharedForm] = useState(() => (isLegacyShareRoute ? readSharedForm() : null))
 
-  if (isShareRoute) {
+  if (shortRoute) return <RemoteSharePage adId={shortRoute[1]} />
+
+  if (isLegacyShareRoute) {
     return sharedForm ? <SharePage form={sharedForm} /> : <InvalidSharePage />
   }
+
+  if (isShareArea) return <InvalidSharePage />
 
   return <EditorApp />
 }

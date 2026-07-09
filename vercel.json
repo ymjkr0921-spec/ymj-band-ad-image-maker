@@ -7,6 +7,14 @@
     {
       "source": "/share",
       "destination": "/index.html"
+    },
+    {
+      "source": "/ad/:id",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/s/:id",
+      "destination": "/index.html"
     }
   ]
 }

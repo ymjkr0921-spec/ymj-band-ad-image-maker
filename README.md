@@ -29,6 +29,7 @@ npm run preview
 - 본문의 줄바꿈 유지 및 내용 길이에 따른 글자 크기 자동 축소
 - 2배 해상도 PNG 이미지 다운로드
 - 밴드 게시글 자동 생성 및 클립보드 복사
+- Upstash Redis에 광고를 저장하고 `/ad/광고ID` 형식의 짧은 공유 링크 생성
 - 현재 전화번호를 사용하는 `tel:` 전화하기 링크
 - 현재 전화번호와 자동문구를 사용하는 `sms:` 문자보내기 링크
 - 모든 입력값을 `localStorage`에 자동 저장하고 새로고침 시 복원
@@ -68,7 +69,19 @@ git push -u origin main
 4. Build Command는 `npm run build`, Output Directory는 `dist`로 설정합니다.
 5. **Deploy**를 선택합니다.
 
-이 프로젝트는 환경 변수가 필요하지 않습니다. 이후 `main` 브랜치에 변경사항을 push하면 Vercel이 자동으로 다시 배포합니다.
+기본 이미지 생성 기능에는 환경 변수가 필요하지 않지만, 짧은 공유 링크 기능에는 아래 Upstash Redis 연결이 필요합니다. 이후 `main` 브랜치에 변경사항을 push하면 Vercel이 자동으로 다시 배포합니다.
+
+### 짧은 공유 링크 저장소 연결
+
+짧은 링크는 다른 기기에서도 광고 내용을 불러와야 하므로 서버 저장소가 필요합니다. 이 프로젝트는 Vercel Functions와 Upstash Redis를 사용합니다.
+
+1. Vercel 프로젝트에서 **Storage 또는 Marketplace**를 엽니다.
+2. **Upstash Redis**를 선택하고 무료 데이터베이스를 생성합니다.
+3. `ymj-band-ad-image-maker` 프로젝트에 데이터베이스를 연결합니다.
+4. `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` 환경 변수가 추가됐는지 확인합니다.
+5. Production을 Redeploy합니다.
+
+연결 후 광고 만들기 화면의 **짧은 링크 만들기** 또는 **밴드글 복사**를 누르면 광고가 저장되고 `/ad/8자리ID` 링크가 생성됩니다. 기존 `/ad?data=...` 링크도 계속 열립니다.
 
 ### 공유 링크와 배포 주소
 

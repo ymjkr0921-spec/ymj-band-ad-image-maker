@@ -219,6 +219,7 @@ textarea { resize: vertical; line-height: 1.65; }
 .share-link-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
 .share-link-actions button, .share-link-actions a { padding: 10px; color: white; font-size: 12px; font-weight: 800; text-align: center; text-decoration: none; background: #0b1f3a; border: 0; border-radius: 7px; cursor: pointer; }
 .share-link-actions a { background: #2472d8; }
+.share-link-actions button:disabled, .band-copy button:disabled { cursor: wait; opacity: .6; }
 .band-copy > div { display: flex; align-items: end; justify-content: space-between; margin-bottom: 9px; }
 .band-copy strong { font-size: 14px; }
 .band-copy span { color: #748399; font-size: 10px; }
@@ -234,6 +235,7 @@ textarea { resize: vertical; line-height: 1.65; }
 .invalid-share-page > div { width: min(100%, 440px); padding: 38px 24px; text-align: center; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgb(15 36 64 / 10%); }
 .invalid-share-page span { display: grid; width: 52px; height: 52px; margin: 0 auto 16px; place-items: center; color: white; font-size: 28px; font-weight: 900; background: #d94747; border-radius: 50%; }
 .invalid-share-page h1 { margin: 0; font-size: 18px; }
+.share-loading { display: grid; min-height: 100vh; padding: 24px; place-items: center; color: #42536a; font-size: 14px; font-weight: 700; background: #edf1f6; }
 
 @media (min-width: 760px) {
   .site-header { padding: 20px 4%; }
