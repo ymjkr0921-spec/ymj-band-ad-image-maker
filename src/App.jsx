@@ -5,6 +5,7 @@ import { getTemplate, templates } from './templates'
 
 const { compressToEncodedURIComponent, decompressFromEncodedURIComponent } = LZString
 const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || ''
+const PRODUCTION_ORIGIN = 'https://ymj-people.vercel.app'
 
 const STORAGE_KEY = 'ymj-band-ad-image-maker:form'
 
@@ -45,14 +46,23 @@ function normalizePhone(value) {
   return value.replace(/[^\d+]/g, '')
 }
 
+function getShareOrigin() {
+  const hostname = window.location.hostname
+  const isLocal = hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.startsWith('192.168.') ||
+    hostname.startsWith('10.') ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
+
+  return isLocal ? window.location.origin : PRODUCTION_ORIGIN
+}
+
 function createShortShareLink(id) {
-  const publicOrigin = API_ORIGIN || import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin
-  return new URL(`/ad/${id}`, publicOrigin).toString()
+  return new URL(`/ad/${id}`, getShareOrigin()).toString()
 }
 
 function createLegacyShareLink(form) {
-  const publicOrigin = import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin
-  const url = new URL('/ad', publicOrigin)
+  const url = new URL('/ad', getShareOrigin())
   url.searchParams.set('data', compressToEncodedURIComponent(JSON.stringify(form)))
   return url.toString()
 }

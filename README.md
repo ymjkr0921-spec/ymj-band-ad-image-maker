@@ -89,11 +89,10 @@ git push -u origin main
 
 ### 공유 링크와 배포 주소
 
-공유 링크는 코드에 도메인을 고정하지 않고 현재 접속 중인 `window.location.origin`을 기준으로 생성됩니다.
-Production 빌드에서는 `.env.production`의 `VITE_PUBLIC_SITE_URL`을 우선 사용하므로, Preview 또는 개별 Deployment URL에서 접속해도 공개 Production URL로 공유 링크가 생성됩니다.
+공유 링크는 Production에서 `https://ymj-people.vercel.app`을 기준으로 생성됩니다. Preview 또는 이전 배포 주소로 접속해도 새 Production 도메인이 사용됩니다. localhost와 사설 IP(`192.168.x.x` 등)에서는 현재 로컬 origin을 유지합니다.
 
 - 로컬 네트워크 접속: `http://192.168.x.x:5173/ad?data=...`
-- Vercel 배포 후: `https://배포주소.vercel.app/ad?data=...`
+- Vercel 배포 후: `https://ymj-people.vercel.app/ad?data=...`
 
 `vercel.json`에는 `/ad`와 `/share` 경로를 `index.html`로 연결하는 rewrite가 설정되어 있습니다. 따라서 공유 링크를 직접 열거나 새로고침해도 광고 상세페이지가 정상적으로 표시됩니다.
 
