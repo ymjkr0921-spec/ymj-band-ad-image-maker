@@ -15,8 +15,14 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    const ad = sanitizeAd(typeof req.body === 'string' ? JSON.parse(req.body) : req.body)
+    const input = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
+    const ad = sanitizeAd(input)
     if (!ad) return res.status(400).json({ error: '올바른 광고 정보를 입력해 주세요.' })
+    const cardImage = typeof input.cardImage === 'string' &&
+      /^data:image\/jpeg;base64,/.test(input.cardImage) &&
+      input.cardImage.length <= 900000
+      ? input.cardImage
+      : ''
 
     const redis = getRedis()
     let id
@@ -26,6 +32,7 @@ export default async function handler(req, res) {
       const created = await redis.set(`ad:${candidate}`, ad, { nx: true })
       if (created) {
         id = candidate
+        if (cardImage) await redis.set(`ad-image:${candidate}`, cardImage)
         break
       }
     }

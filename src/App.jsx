@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { toPng } from 'html-to-image'
+import { toJpeg, toPng } from 'html-to-image'
 import LZString from 'lz-string'
 import { getTemplate, templates } from './templates'
 
@@ -12,6 +12,8 @@ const defaults = {
   templateId: 'construction',
   highlight: '당일지급 / 초보가능 / 장기가능',
   title: '안성 현대차 현장 모집',
+  cardTitle: '안성 현대차 현장 모집',
+  cardDescription: '클릭하면 모집 내용을 확인하고 전화·문자 문의할 수 있습니다.',
   body: `■ 모집분야: 건설현장 보조 인력
 ■ 근무장소: 안성 현대차 현장
 ■ 근무시간: 오전 7시 ~ 오후 5시
@@ -28,7 +30,12 @@ const defaults = {
 function loadForm() {
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY))
-    return { ...defaults, ...stored }
+    return {
+      ...defaults,
+      ...stored,
+      cardTitle: stored?.cardTitle || stored?.title || defaults.cardTitle,
+      cardDescription: stored?.cardDescription || defaults.cardDescription,
+    }
   } catch {
     return defaults
   }
@@ -51,17 +58,7 @@ function createLegacyShareLink(form) {
 }
 
 function createBandPost(form, shareLink) {
-  return [
-    form.highlight,
-    form.title,
-    form.body,
-    `☎ 문의: ${form.phone}`,
-    form.footer,
-    '🔗 상세보기 · 전화 · 문자',
-    shareLink,
-  ]
-    .filter(Boolean)
-    .join('\n\n')
+  return `👇 아래 광고카드를 클릭하면 상세내용 확인 후 전화·문자 문의가 가능합니다.\n${shareLink}`
 }
 
 function readSharedForm() {
@@ -243,7 +240,13 @@ function EditorApp() {
   useBodyTextFit(bodyRef, `${form.body}-${form.templateId}`)
 
   const update = (key) => (event) => {
-    setForm((current) => ({ ...current, [key]: event.target.value }))
+    const value = event.target.value
+    setForm((current) => {
+      if (key === 'title' && (!current.cardTitle || current.cardTitle === current.title)) {
+        return { ...current, title: value, cardTitle: value }
+      }
+      return { ...current, [key]: value }
+    })
   }
 
   const flash = (message) => {
@@ -258,10 +261,23 @@ function EditorApp() {
     setSavingShare(true)
     try {
       try {
+        let cardImage = ''
+        try {
+          cardImage = await toJpeg(previewRef.current, {
+            cacheBust: true,
+            quality: 0.82,
+            pixelRatio: 1,
+            width: 720,
+            height: 900,
+          })
+        } catch (error) {
+          console.warn('Card preview image generation failed', error)
+        }
+
         const response = await fetch(`${API_ORIGIN}/api/ads`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
+          body: JSON.stringify({ ...form, cardImage }),
         })
         const result = await response.json().catch(() => ({}))
 
@@ -408,6 +424,18 @@ function EditorApp() {
               <span>광고 제목</span>
               <input value={form.title} onChange={update('title')} placeholder="현장 모집 제목" />
             </label>
+            <label>
+              <span>밴드 카드 제목</span>
+              <input value={form.cardTitle} onChange={update('cardTitle')} placeholder="밴드 미리보기에 표시할 제목" />
+            </label>
+            <label className="wide-field">
+              <span>밴드 카드 설명</span>
+              <input
+                value={form.cardDescription}
+                onChange={update('cardDescription')}
+                placeholder="클릭하면 모집 내용을 확인하고 전화·문자 문의할 수 있습니다."
+              />
+            </label>
             <label className="wide-field">
               <span>긴 광고 텍스트</span>
               <small>밴드에 올릴 문구를 줄바꿈 그대로 붙여넣으세요.</small>
@@ -484,7 +512,7 @@ function EditorApp() {
               <strong>밴드에 같이 올릴 글</strong>
               <span>실제 전화·문자 기능이 있는 공유 링크가 포함됩니다.</span>
             </div>
-            <textarea readOnly value={bandPost} rows="6" aria-label="자동 생성된 밴드글" />
+            <textarea readOnly value={bandPost} rows="4" aria-label="자동 생성된 밴드글" />
             <button type="button" onClick={copyBandPost} disabled={savingShare}>
               {savingShare ? '광고 저장 중...' : '▣ 밴드글 복사'}
             </button>

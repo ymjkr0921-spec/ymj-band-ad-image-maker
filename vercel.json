@@ -2,19 +2,19 @@
   "rewrites": [
     {
       "source": "/ad",
-      "destination": "/index.html"
+      "destination": "/api/share"
     },
     {
       "source": "/share",
-      "destination": "/index.html"
+      "destination": "/api/share"
     },
     {
       "source": "/ad/:id",
-      "destination": "/index.html"
+      "destination": "/api/share?id=:id"
     },
     {
       "source": "/s/:id",
-      "destination": "/index.html"
+      "destination": "/api/share?id=:id"
     }
   ]
 }

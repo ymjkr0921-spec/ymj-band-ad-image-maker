@@ -20,7 +20,17 @@ export function setCors(res) {
 export function sanitizeAd(input) {
   if (!input || typeof input !== 'object') return null
 
-  const fields = ['templateId', 'highlight', 'title', 'body', 'phone', 'smsMessage', 'footer']
+  const fields = [
+    'templateId',
+    'highlight',
+    'title',
+    'cardTitle',
+    'cardDescription',
+    'body',
+    'phone',
+    'smsMessage',
+    'footer',
+  ]
   const ad = {}
 
   for (const field of fields) {

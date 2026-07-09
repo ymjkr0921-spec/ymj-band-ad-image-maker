@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#07192e"/>
+      <stop offset="1" stop-color="#102f50"/>
+    </linearGradient>
+    <pattern id="stripe" width="56" height="56" patternUnits="userSpaceOnUse" patternTransform="rotate(135)">
+      <rect width="28" height="56" fill="#ffd43b"/>
+      <rect x="28" width="28" height="56" fill="#101820"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" rx="30" fill="url(#bg)"/>
+  <rect width="1200" height="28" fill="url(#stripe)"/>
+  <rect x="70" y="82" width="240" height="58" rx="29" fill="#ffd43b"/>
+  <text x="190" y="121" text-anchor="middle" font-family="sans-serif" font-size="28" font-weight="700" fill="#101820">건설현장 구인</text>
+  <text x="70" y="250" font-family="sans-serif" font-size="74" font-weight="800" fill="#ffffff">함께 일할 분을</text>
+  <text x="70" y="345" font-family="sans-serif" font-size="84" font-weight="900" fill="#ffd43b">찾습니다</text>
+  <text x="73" y="420" font-family="sans-serif" font-size="30" fill="#cbd8e7">상세 모집내용과 전화·문자 문의를 확인하세요.</text>
+  <rect x="70" y="484" width="500" height="92" rx="18" fill="#16a05d"/>
+  <text x="320" y="543" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="800" fill="#ffffff">☎ 전화 문의</text>
+  <rect x="595" y="484" width="500" height="92" rx="18" fill="#2472d8"/>
+  <text x="845" y="543" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="800" fill="#ffffff">✉ 문자 문의</text>
+</svg>
