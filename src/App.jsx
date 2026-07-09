@@ -8,6 +8,11 @@ const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || ''
 const PRODUCTION_ORIGIN = 'https://ymj-people.vercel.app'
 
 const STORAGE_KEY = 'ymj-band-ad-image-maker:form'
+const BODY_CONTROL_DEFAULTS = {
+  bodyOffset: 8,
+  bodyFontSize: 38,
+  bodyLineSpacing: 'normal',
+}
 
 const defaults = {
   templateId: 'construction',
@@ -15,6 +20,7 @@ const defaults = {
   title: '안성 현대차 현장 모집',
   cardTitle: '안성 현대차 현장 모집',
   cardDescription: '클릭하면 모집 내용을 확인하고 전화·문자 문의할 수 있습니다.',
+  ...BODY_CONTROL_DEFAULTS,
   body: `■ 모집분야: 건설현장 보조 인력
 ■ 근무장소: 안성 현대차 현장
 ■ 근무시간: 오전 7시 ~ 오후 5시
@@ -95,16 +101,18 @@ function readSharedForm() {
   }
 }
 
-function useBodyTextFit(bodyRef, body) {
+function useBodyTextFit(bodyRef, body, fontSize, lineSpacing) {
   useEffect(() => {
     const element = bodyRef.current
     if (!element) return
 
     const fitText = () => {
-      let size = 34
+      const lineHeights = { narrow: 1.08, normal: 1.24, wide: 1.44 }
+      let size = Number(fontSize) || BODY_CONTROL_DEFAULTS.bodyFontSize
       element.classList.remove('is-overflowing')
+      element.style.lineHeight = String(lineHeights[lineSpacing] || lineHeights.normal)
       element.style.fontSize = `${size}px`
-      while (element.scrollHeight > element.clientHeight && size > 9) {
+      while (element.scrollHeight > element.clientHeight && size > 8) {
         size -= 1
         element.style.fontSize = `${size}px`
       }
@@ -113,7 +121,7 @@ function useBodyTextFit(bodyRef, body) {
 
     fitText()
     document.fonts?.ready.then(fitText)
-  }, [body, bodyRef])
+  }, [body, bodyRef, fontSize, lineSpacing])
 }
 
 function AdCard({ form, cardRef, bodyRef, interactive = false }) {
@@ -145,7 +153,11 @@ function AdCard({ form, cardRef, bodyRef, interactive = false }) {
         <span><b>♟</b>팀원모집</span>
         <span><b>✓</b>초보가능</span>
       </div>
-      <div className="ad-body" ref={bodyRef}>
+      <div
+        className="ad-body"
+        ref={bodyRef}
+        style={{ paddingTop: `calc(3.5% + ${Number(form.bodyOffset) || 0}px)` }}
+      >
         <strong className="body-label">▣ 모집 내용</strong>
         <span>{form.body || '광고 내용을 입력하면 이곳에 표시됩니다.'}</span>
       </div>
@@ -172,7 +184,12 @@ function AdCard({ form, cardRef, bodyRef, interactive = false }) {
 
 function SharePage({ form }) {
   const bodyRef = useRef(null)
-  useBodyTextFit(bodyRef, `${form.body}-${form.templateId}`)
+  useBodyTextFit(
+    bodyRef,
+    `${form.body}-${form.templateId}-${form.bodyOffset}`,
+    form.bodyFontSize,
+    form.bodyLineSpacing,
+  )
 
   return (
     <div className="share-page">
@@ -247,16 +264,26 @@ function EditorApp() {
     setShareMode('')
   }, [form])
 
-  useBodyTextFit(bodyRef, `${form.body}-${form.templateId}`)
+  useBodyTextFit(
+    bodyRef,
+    `${form.body}-${form.templateId}-${form.bodyOffset}`,
+    form.bodyFontSize,
+    form.bodyLineSpacing,
+  )
 
   const update = (key) => (event) => {
-    const value = event.target.value
+    const value = event.target.type === 'range' ? Number(event.target.value) : event.target.value
     setForm((current) => {
       if (key === 'title' && (!current.cardTitle || current.cardTitle === current.title)) {
         return { ...current, title: value, cardTitle: value }
       }
       return { ...current, [key]: value }
     })
+  }
+
+  const resetBodyControls = () => {
+    setForm((current) => ({ ...current, ...BODY_CONTROL_DEFAULTS }))
+    flash('본문 조절값을 초기화했습니다.')
   }
 
   const flash = (message) => {
@@ -451,6 +478,58 @@ function EditorApp() {
               <small>밴드에 올릴 문구를 줄바꿈 그대로 붙여넣으세요.</small>
               <textarea value={form.body} onChange={update('body')} rows="13" placeholder="광고 내용을 입력하세요." />
             </label>
+            <div className="body-controls wide-field">
+              <div className="body-controls-heading">
+                <div>
+                  <strong>본문 표시 조절</strong>
+                  <small>미리보기, PNG, 공유페이지에 동일하게 적용됩니다.</small>
+                </div>
+                <button type="button" onClick={resetBodyControls}>↺ 본문 조절 초기화</button>
+              </div>
+              <label className="slider-control">
+                <span><b>본문 위치</b><output>{form.bodyOffset > 0 ? `아래 ${form.bodyOffset}px` : form.bodyOffset < 0 ? `위 ${Math.abs(form.bodyOffset)}px` : '가운데'}</output></span>
+                <input
+                  type="range"
+                  min="-16"
+                  max="28"
+                  step="2"
+                  value={form.bodyOffset}
+                  onChange={update('bodyOffset')}
+                />
+                <small><i>위로</i><i>아래로</i></small>
+              </label>
+              <label className="slider-control">
+                <span><b>본문 글씨 크기</b><output>{form.bodyFontSize}px</output></span>
+                <input
+                  type="range"
+                  min="24"
+                  max="52"
+                  step="1"
+                  value={form.bodyFontSize}
+                  onChange={update('bodyFontSize')}
+                />
+                <small><i>작게</i><i>크게</i></small>
+              </label>
+              <fieldset className="line-spacing-control">
+                <legend>줄 간격</legend>
+                {[
+                  ['narrow', '좁게'],
+                  ['normal', '기본'],
+                  ['wide', '넓게'],
+                ].map(([value, label]) => (
+                  <label key={value}>
+                    <input
+                      type="radio"
+                      name="bodyLineSpacing"
+                      value={value}
+                      checked={form.bodyLineSpacing === value}
+                      onChange={update('bodyLineSpacing')}
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </fieldset>
+            </div>
             <label>
               <span>전화번호</span>
               <input value={form.phone} onChange={update('phone')} inputMode="tel" placeholder="010-0000-0000" />
