@@ -9,9 +9,9 @@ const PRODUCTION_ORIGIN = 'https://ymj-people.vercel.app'
 
 const STORAGE_KEY = 'ymj-band-ad-image-maker:form'
 const BODY_CONTROL_DEFAULTS = {
-  bodyOffset: 8,
-  bodyFontSize: 38,
-  bodyLineSpacing: 'normal',
+  bodyOffsetY: 20,
+  bodyFontSize: 40,
+  bodyLineHeight: 'normal',
 }
 
 const defaults = {
@@ -37,14 +37,21 @@ const defaults = {
 function loadForm() {
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY))
-    return {
-      ...defaults,
-      ...stored,
-      cardTitle: stored?.cardTitle || stored?.title || defaults.cardTitle,
-      cardDescription: stored?.cardDescription || defaults.cardDescription,
-    }
+    return normalizeForm(stored)
   } catch {
     return defaults
+  }
+}
+
+function normalizeForm(data = {}) {
+  return {
+    ...defaults,
+    ...data,
+    cardTitle: data.cardTitle || data.title || defaults.cardTitle,
+    cardDescription: data.cardDescription || defaults.cardDescription,
+    bodyOffsetY: Number(data.bodyOffsetY ?? data.bodyOffset ?? BODY_CONTROL_DEFAULTS.bodyOffsetY),
+    bodyFontSize: Number(data.bodyFontSize ?? BODY_CONTROL_DEFAULTS.bodyFontSize),
+    bodyLineHeight: data.bodyLineHeight || data.bodyLineSpacing || BODY_CONTROL_DEFAULTS.bodyLineHeight,
   }
 }
 
@@ -95,33 +102,10 @@ function readSharedForm() {
     ) {
       return null
     }
-    return { ...defaults, ...parsed }
+    return normalizeForm(parsed)
   } catch {
     return null
   }
-}
-
-function useBodyTextFit(bodyRef, body, fontSize, lineSpacing) {
-  useEffect(() => {
-    const element = bodyRef.current
-    if (!element) return
-
-    const fitText = () => {
-      const lineHeights = { narrow: 1.08, normal: 1.24, wide: 1.44 }
-      let size = Number(fontSize) || BODY_CONTROL_DEFAULTS.bodyFontSize
-      element.classList.remove('is-overflowing')
-      element.style.lineHeight = String(lineHeights[lineSpacing] || lineHeights.normal)
-      element.style.fontSize = `${size}px`
-      while (element.scrollHeight > element.clientHeight && size > 8) {
-        size -= 1
-        element.style.fontSize = `${size}px`
-      }
-      element.classList.toggle('is-overflowing', size < 19)
-    }
-
-    fitText()
-    document.fonts?.ready.then(fitText)
-  }, [body, bodyRef, fontSize, lineSpacing])
 }
 
 function AdCard({ form, cardRef, bodyRef, interactive = false }) {
@@ -130,6 +114,10 @@ function AdCard({ form, cardRef, bodyRef, interactive = false }) {
   const CallElement = interactive ? 'a' : 'div'
   const MessageElement = interactive ? 'a' : 'div'
   const template = getTemplate(form.templateId)
+  const lineHeights = { narrow: 1.15, normal: 1.35, wide: 1.6 }
+  const bodyOffsetY = Number(form.bodyOffsetY) || 0
+  const bodyFontSize = Number(form.bodyFontSize) || BODY_CONTROL_DEFAULTS.bodyFontSize
+  const bodyLineHeight = lineHeights[form.bodyLineHeight] || lineHeights.normal
 
   return (
     <article
@@ -153,13 +141,18 @@ function AdCard({ form, cardRef, bodyRef, interactive = false }) {
         <span><b>♟</b>팀원모집</span>
         <span><b>✓</b>초보가능</span>
       </div>
-      <div
-        className="ad-body"
-        ref={bodyRef}
-        style={{ paddingTop: `calc(3.5% + ${Number(form.bodyOffset) || 0}px)` }}
-      >
-        <strong className="body-label">▣ 모집 내용</strong>
-        <span>{form.body || '광고 내용을 입력하면 이곳에 표시됩니다.'}</span>
+      <div className="ad-body" ref={bodyRef}>
+        <div
+          className="ad-body-content"
+          style={{
+            fontSize: `${bodyFontSize}px`,
+            lineHeight: bodyLineHeight,
+            transform: `translateY(${bodyOffsetY}px)`,
+          }}
+        >
+          <strong className="body-label">▣ 모집 내용</strong>
+          <span>{form.body || '광고 내용을 입력하면 이곳에 표시됩니다.'}</span>
+        </div>
       </div>
       <div className="ad-contact">
         <CallElement
@@ -183,18 +176,10 @@ function AdCard({ form, cardRef, bodyRef, interactive = false }) {
 }
 
 function SharePage({ form }) {
-  const bodyRef = useRef(null)
-  useBodyTextFit(
-    bodyRef,
-    `${form.body}-${form.templateId}-${form.bodyOffset}`,
-    form.bodyFontSize,
-    form.bodyLineSpacing,
-  )
-
   return (
     <div className="share-page">
       <main className="share-content">
-        <AdCard form={form} bodyRef={bodyRef} interactive />
+        <AdCard form={normalizeForm(form)} interactive />
       </main>
     </div>
   )
@@ -212,7 +197,7 @@ function RemoteSharePage({ adId }) {
         if (!response.ok) throw new Error('LOAD_FAILED')
         return response.json()
       })
-      .then(({ ad }) => setState({ loading: false, form: { ...defaults, ...ad } }))
+      .then(({ ad }) => setState({ loading: false, form: normalizeForm(ad) }))
       .catch((error) => {
         if (error.name !== 'AbortError') setState({ loading: false, form: null })
       })
@@ -246,7 +231,6 @@ function EditorApp() {
   const [shareMode, setShareMode] = useState('')
   const [savingShare, setSavingShare] = useState(false)
   const previewRef = useRef(null)
-  const bodyRef = useRef(null)
 
   const cleanPhone = normalizePhone(form.phone)
   const smsHref = `sms:${cleanPhone}?body=${encodeURIComponent(form.smsMessage)}`
@@ -263,13 +247,6 @@ function EditorApp() {
     setShareLink('')
     setShareMode('')
   }, [form])
-
-  useBodyTextFit(
-    bodyRef,
-    `${form.body}-${form.templateId}-${form.bodyOffset}`,
-    form.bodyFontSize,
-    form.bodyLineSpacing,
-  )
 
   const update = (key) => (event) => {
     const value = event.target.type === 'range' ? Number(event.target.value) : event.target.value
@@ -487,14 +464,14 @@ function EditorApp() {
                 <button type="button" onClick={resetBodyControls}>↺ 본문 조절 초기화</button>
               </div>
               <label className="slider-control">
-                <span><b>본문 위치</b><output>{form.bodyOffset > 0 ? `아래 ${form.bodyOffset}px` : form.bodyOffset < 0 ? `위 ${Math.abs(form.bodyOffset)}px` : '가운데'}</output></span>
+                <span><b>본문 위치</b><output>{form.bodyOffsetY > 0 ? `아래 ${form.bodyOffsetY}px` : form.bodyOffsetY < 0 ? `위 ${Math.abs(form.bodyOffsetY)}px` : '가운데'}</output></span>
                 <input
                   type="range"
-                  min="-16"
-                  max="28"
-                  step="2"
-                  value={form.bodyOffset}
-                  onChange={update('bodyOffset')}
+                  min="-80"
+                  max="120"
+                  step="1"
+                  value={form.bodyOffsetY}
+                  onChange={update('bodyOffsetY')}
                 />
                 <small><i>위로</i><i>아래로</i></small>
               </label>
@@ -503,8 +480,8 @@ function EditorApp() {
                 <input
                   type="range"
                   min="24"
-                  max="52"
-                  step="1"
+                  max="60"
+                  step="2"
                   value={form.bodyFontSize}
                   onChange={update('bodyFontSize')}
                 />
@@ -520,15 +497,20 @@ function EditorApp() {
                   <label key={value}>
                     <input
                       type="radio"
-                      name="bodyLineSpacing"
+                      name="bodyLineHeight"
                       value={value}
-                      checked={form.bodyLineSpacing === value}
-                      onChange={update('bodyLineSpacing')}
+                      checked={form.bodyLineHeight === value}
+                      onChange={update('bodyLineHeight')}
                     />
                     <span>{label}</span>
                   </label>
                 ))}
               </fieldset>
+              <p className="body-controls-current">
+                현재 조절값 · 본문 위치: {form.bodyOffsetY}px / 글씨 크기: {form.bodyFontSize}px / 줄간격: {
+                  { narrow: '좁게', normal: '기본', wide: '넓게' }[form.bodyLineHeight]
+                }
+              </p>
             </div>
             <label>
               <span>전화번호</span>
@@ -555,7 +537,7 @@ function EditorApp() {
           </div>
 
           <div className="preview-stage">
-            <AdCard form={form} cardRef={previewRef} bodyRef={bodyRef} />
+            <AdCard form={form} cardRef={previewRef} />
           </div>
 
           <div className="primary-actions">

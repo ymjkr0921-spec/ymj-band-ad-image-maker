@@ -38,12 +38,13 @@ export function sanitizeAd(input) {
     ad[field] = input[field].slice(0, field === 'body' ? 12000 : 500)
   }
 
-  const bodyOffset = Number(input.bodyOffset)
+  const bodyOffsetY = Number(input.bodyOffsetY ?? input.bodyOffset)
   const bodyFontSize = Number(input.bodyFontSize)
-  ad.bodyOffset = Number.isFinite(bodyOffset) ? Math.max(-16, Math.min(28, bodyOffset)) : 8
-  ad.bodyFontSize = Number.isFinite(bodyFontSize) ? Math.max(24, Math.min(52, bodyFontSize)) : 38
-  ad.bodyLineSpacing = ['narrow', 'normal', 'wide'].includes(input.bodyLineSpacing)
-    ? input.bodyLineSpacing
+  const bodyLineHeight = input.bodyLineHeight || input.bodyLineSpacing
+  ad.bodyOffsetY = Number.isFinite(bodyOffsetY) ? Math.max(-80, Math.min(120, bodyOffsetY)) : 20
+  ad.bodyFontSize = Number.isFinite(bodyFontSize) ? Math.max(24, Math.min(60, bodyFontSize)) : 40
+  ad.bodyLineHeight = ['narrow', 'normal', 'wide'].includes(bodyLineHeight)
+    ? bodyLineHeight
     : 'normal'
 
   if (!ad.title.trim() || !ad.body.trim() || !ad.phone.trim()) return null

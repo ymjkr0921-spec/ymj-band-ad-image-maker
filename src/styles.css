@@ -91,6 +91,7 @@ textarea { resize: vertical; line-height: 1.65; }
 .body-controls-heading strong { font-size: 14px; }
 .body-controls-heading small { color: #718198; font-size: 10px; }
 .body-controls-heading button { flex: none; padding: 8px 10px; color: #315275; font-size: 10px; font-weight: 800; background: white; border: 1px solid #cbd8e7; border-radius: 7px; cursor: pointer; }
+.body-controls-current { margin: 0; padding: 8px 10px; color: #38516f; font-size: 10px; font-weight: 700; text-align: center; background: #e6eef9; border-radius: 7px; }
 .slider-control { gap: 9px; }
 .slider-control > span { display: flex; align-items: center; justify-content: space-between; }
 .slider-control b, .line-spacing-control legend { font-size: 12px; }
@@ -145,15 +146,12 @@ textarea { resize: vertical; line-height: 1.65; }
   overflow: hidden;
   overflow-wrap: anywhere;
   color: #19273b;
-  font-size: 34px;
-  font-weight: 700;
-  line-height: 1.48;
   background: #fff;
   border-top: 5px solid #ffd43b;
 }
+.ad-body-content { font-weight: 700; transform-origin: top left; will-change: transform; }
 .ad-body .body-label { display: block; margin-bottom: 2%; color: #0b1f3a; font-size: .72em; font-weight: 900; border-bottom: 2px solid #ffd43b; }
-.ad-body > span { display: block; white-space: pre-wrap; }
-.ad-body.is-overflowing .body-label { margin-bottom: 1%; }
+.ad-body-content > span { display: block; white-space: pre-wrap; }
 .ad-contact { display: grid; grid-template-columns: 1.35fr 1fr; gap: 2%; flex: none; padding: .9% 3.8%; background: #f3f5f8; }
 .image-button { display: flex; align-items: center; justify-content: center; gap: 5%; padding: 4% 2%; color: white; font-size: clamp(11px, 3.7cqw, 27px); font-weight: 900; line-height: 1.15; border-radius: 7px; box-shadow: inset 0 -3px rgb(0 0 0 / 18%); }
 .interactive-card .image-button { text-align: left; text-decoration: none; transition: transform .15s, filter .15s; }
