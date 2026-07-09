@@ -3,7 +3,7 @@ import { toPng } from 'html-to-image'
 import LZString from 'lz-string'
 import { getTemplate, templates } from './templates'
 
-const { decompressFromEncodedURIComponent } = LZString
+const { compressToEncodedURIComponent, decompressFromEncodedURIComponent } = LZString
 const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || ''
 
 const STORAGE_KEY = 'ymj-band-ad-image-maker:form'
@@ -41,6 +41,13 @@ function normalizePhone(value) {
 function createShortShareLink(id) {
   const publicOrigin = API_ORIGIN || import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin
   return new URL(`/ad/${id}`, publicOrigin).toString()
+}
+
+function createLegacyShareLink(form) {
+  const publicOrigin = import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin
+  const url = new URL('/ad', publicOrigin)
+  url.searchParams.set('data', compressToEncodedURIComponent(JSON.stringify(form)))
+  return url.toString()
 }
 
 function createBandPost(form, shareLink) {
@@ -212,6 +219,7 @@ function EditorApp() {
   const [notice, setNotice] = useState('')
   const [downloading, setDownloading] = useState(false)
   const [shareLink, setShareLink] = useState('')
+  const [shareMode, setShareMode] = useState('')
   const [savingShare, setSavingShare] = useState(false)
   const previewRef = useRef(null)
   const bodyRef = useRef(null)
@@ -229,6 +237,7 @@ function EditorApp() {
 
   useEffect(() => {
     setShareLink('')
+    setShareMode('')
   }, [form])
 
   useBodyTextFit(bodyRef, `${form.body}-${form.templateId}`)
@@ -243,22 +252,39 @@ function EditorApp() {
   }
 
   const ensureShareLink = async () => {
-    if (shareLink) return shareLink
+    if (shareLink) return { link: shareLink, fallback: shareMode === 'legacy' }
     if (savingShare) throw new Error('SAVE_IN_PROGRESS')
 
     setSavingShare(true)
     try {
-      const response = await fetch(`${API_ORIGIN}/api/ads`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-      const result = await response.json()
-      if (!response.ok || !result.id) throw new Error(result.error || 'SAVE_FAILED')
+      try {
+        const response = await fetch(`${API_ORIGIN}/api/ads`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+        const result = await response.json().catch(() => ({}))
 
-      const nextLink = createShortShareLink(result.id)
-      setShareLink(nextLink)
-      return nextLink
+        if (response.ok && result.id) {
+          const nextLink = createShortShareLink(result.id)
+          setShareLink(nextLink)
+          setShareMode('short')
+          return { link: nextLink, fallback: false }
+        }
+
+        if (response.status !== 503) {
+          throw new Error(result.error || 'SAVE_FAILED')
+        }
+      } catch (error) {
+        if (error.message !== 'Failed to fetch' && error.message !== 'NetworkError when attempting to fetch resource.') {
+          if (error.message !== '광고 저장소 연결이 필요합니다.') throw error
+        }
+      }
+
+      const fallbackLink = createLegacyShareLink(form)
+      setShareLink(fallbackLink)
+      setShareMode('legacy')
+      return { link: fallbackLink, fallback: true }
     } finally {
       setSavingShare(false)
     }
@@ -266,20 +292,18 @@ function EditorApp() {
 
   const createShare = async () => {
     try {
-      await ensureShareLink()
-      flash('짧은 공유 링크를 만들었습니다.')
-    } catch (error) {
-      flash(error.message === '광고 저장소 연결이 필요합니다.'
-        ? error.message
-        : '공유 링크를 만들지 못했습니다.')
+      const { fallback } = await ensureShareLink()
+      flash(fallback ? '저장소 미연결로 긴 링크로 생성되었습니다.' : '짧은 공유 링크를 만들었습니다.')
+    } catch {
+      flash('공유 링크를 만들지 못했습니다.')
     }
   }
 
   const copyBandPost = async () => {
     try {
-      const link = await ensureShareLink()
+      const { link, fallback } = await ensureShareLink()
       await navigator.clipboard.writeText(createBandPost(form, link))
-      flash('밴드글을 복사했습니다.')
+      flash(fallback ? '저장소 미연결로 긴 링크로 생성되었습니다.' : '밴드글을 복사했습니다.')
     } catch {
       flash('광고 저장 후 밴드글을 복사하지 못했습니다.')
     }
@@ -287,9 +311,9 @@ function EditorApp() {
 
   const copyShareLink = async () => {
     try {
-      const link = await ensureShareLink()
+      const { link, fallback } = await ensureShareLink()
       await navigator.clipboard.writeText(link)
-      flash('공유 링크를 복사했습니다.')
+      flash(fallback ? '저장소 미연결로 긴 링크로 생성되었습니다.' : '공유 링크를 복사했습니다.')
     } catch {
       flash('공유 링크를 만들지 못했습니다.')
     }
@@ -431,7 +455,11 @@ function EditorApp() {
           <div className="share-link-box">
             <div>
               <strong>공유용 광고 페이지</strong>
-              <span>광고를 저장하면 짧은 링크가 생성됩니다.</span>
+              <span>
+                {shareMode === 'legacy'
+                  ? '저장소 미연결로 기존 긴 링크를 사용합니다.'
+                  : '저장소 연결 시 짧은 링크가 생성됩니다.'}
+              </span>
             </div>
             <input
               readOnly
