@@ -147,11 +147,14 @@ function AdCard({ form, cardRef, bodyRef, interactive = false }) {
           style={{
             fontSize: `${bodyFontSize}px`,
             lineHeight: bodyLineHeight,
-            transform: `translateY(${bodyOffsetY}px)`,
+            marginTop: `${bodyOffsetY}px`,
           }}
         >
           <strong className="body-label">▣ 모집 내용</strong>
           <span>{form.body || '광고 내용을 입력하면 이곳에 표시됩니다.'}</span>
+        </div>
+        <div className="ad-body-scroll-hint" aria-hidden="true">
+          내용이 길면 위아래로 밀어 확인하세요
         </div>
       </div>
       <div className="ad-contact">
