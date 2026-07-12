@@ -55,6 +55,13 @@ export const templates = [
     icon: '🚧',
     colors: ['#061321', '#f4b51f', '#0c8745'],
   },
+  {
+    id: 'character-photo-original',
+    name: '원본 캐릭터 모집형',
+    description: '업로드 이미지 배경 위에 주요 문구만 교체하는 템플릿',
+    icon: '👷',
+    colors: ['#071321', '#ffd22a', '#0c8745'],
+  },
 ]
 
 export function getTemplate(templateId) {
