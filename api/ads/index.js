@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     if (!ad) return res.status(400).json({ error: '올바른 광고 정보를 입력해 주세요.' })
     const cardImage = typeof input.cardImage === 'string' &&
       /^data:image\/jpeg;base64,/.test(input.cardImage) &&
-      input.cardImage.length <= 900000
+      input.cardImage.length <= 1500000
       ? input.cardImage
       : ''
 

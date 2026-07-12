@@ -14,12 +14,33 @@ const BODY_CONTROL_DEFAULTS = {
   bodyLineHeight: 'normal',
 }
 
+const CARD_COPY_PRESETS = [
+  {
+    id: 'basic',
+    name: '기본형',
+    titleSuffix: '｜당일지급 조공·기공·반장 모집',
+    description: '출퇴근 가능 · 안전벨트/연장 풀착용 필수 · 클릭 후 전화/문자 바로 문의',
+  },
+  {
+    id: 'strong',
+    name: '강한 광고형',
+    titleSuffix: '｜즉시출근 가능 현장 인원 긴급 모집',
+    description: '당일지급 · 팀원모집 · 초보/경력 문의 가능 · 광고카드 클릭 후 바로 연락주세요',
+  },
+  {
+    id: 'clean',
+    name: '깔끔 안내형',
+    titleSuffix: '｜건설현장 인력 모집 안내',
+    description: '모집내용 확인 후 전화 또는 문자로 간편 문의 가능합니다. 안전장비 착용 필수',
+  },
+]
+
 const defaults = {
   templateId: 'construction',
   highlight: '당일지급 / 초보가능 / 장기가능',
   title: '안성 현대차 현장 모집',
-  cardTitle: '안성 현대차 현장 모집',
-  cardDescription: '클릭하면 모집 내용을 확인하고 전화·문자 문의할 수 있습니다.',
+  cardTitle: '안성 현대차 현장 모집｜당일지급 조공·기공·반장 모집',
+  cardDescription: '출퇴근 가능 · 안전벨트/연장 풀착용 필수 · 클릭 후 전화/문자 바로 문의',
   ...BODY_CONTROL_DEFAULTS,
   body: `■ 모집분야: 건설현장 보조 인력
 ■ 근무장소: 안성 현대차 현장
@@ -47,11 +68,42 @@ function normalizeForm(data = {}) {
   return {
     ...defaults,
     ...data,
-    cardTitle: data.cardTitle || data.title || defaults.cardTitle,
-    cardDescription: data.cardDescription || defaults.cardDescription,
+    cardTitle: data.cardTitle || createCardTitle(data.title || defaults.title),
+    cardDescription: data.cardDescription || createCardDescription(),
     bodyOffsetY: Number(data.bodyOffsetY ?? data.bodyOffset ?? BODY_CONTROL_DEFAULTS.bodyOffsetY),
     bodyFontSize: Number(data.bodyFontSize ?? BODY_CONTROL_DEFAULTS.bodyFontSize),
     bodyLineHeight: data.bodyLineHeight || data.bodyLineSpacing || BODY_CONTROL_DEFAULTS.bodyLineHeight,
+  }
+}
+
+function createCardTitle(title = '') {
+  const baseTitle = String(title).trim() || '건설현장 인력 모집'
+  return `${baseTitle}${CARD_COPY_PRESETS[0].titleSuffix}`
+}
+
+function createCardDescription(preset = CARD_COPY_PRESETS[0]) {
+  return preset.description
+}
+
+function isGeneratedCardTitle(value = '', title = '') {
+  const trimmed = String(value).trim()
+  if (!trimmed) return true
+  return CARD_COPY_PRESETS.some((preset) => trimmed === `${String(title).trim()}${preset.titleSuffix}`) ||
+    trimmed === String(title).trim()
+}
+
+function isGeneratedCardDescription(value = '') {
+  const trimmed = String(value).trim()
+  if (!trimmed) return true
+  return CARD_COPY_PRESETS.some((preset) => trimmed === preset.description)
+}
+
+function withGeneratedCardCopy(form) {
+  const title = String(form.title || '').trim()
+  return {
+    ...form,
+    cardTitle: String(form.cardTitle || '').trim() || createCardTitle(title),
+    cardDescription: String(form.cardDescription || '').trim() || createCardDescription(),
   }
 }
 
@@ -81,7 +133,8 @@ function createLegacyShareLink(form) {
 }
 
 function createBandPost(form, shareLink) {
-  return `👇 아래 광고카드를 클릭하면 상세내용 확인 후 전화·문자 문의가 가능합니다.\n${shareLink}`
+  const cardTitle = withGeneratedCardCopy(form).cardTitle
+  return `📌 ${cardTitle}\n👇 아래 광고카드를 클릭하면 모집내용 확인 후 전화·문자 바로 문의 가능합니다.\n\n${shareLink}`
 }
 
 function readSharedForm() {
@@ -228,6 +281,7 @@ function nextFrame() {
 }
 
 async function prepareDownloadCard(card) {
+  if (!card) return () => {}
   const body = card.querySelector('.ad-body')
   const content = card.querySelector('.ad-body-content')
   if (!body || !content) return () => {}
@@ -301,11 +355,20 @@ function EditorApp() {
   const update = (key) => (event) => {
     const value = event.target.type === 'range' ? Number(event.target.value) : event.target.value
     setForm((current) => {
-      if (key === 'title' && (!current.cardTitle || current.cardTitle === current.title)) {
-        return { ...current, title: value, cardTitle: value }
+      if (key === 'title' && isGeneratedCardTitle(current.cardTitle, current.title)) {
+        return { ...current, title: value, cardTitle: createCardTitle(value) }
       }
       return { ...current, [key]: value }
     })
+  }
+
+  const applyCardCopyPreset = (preset) => {
+    setForm((current) => ({
+      ...current,
+      cardTitle: createCardTitle(current.title).replace(CARD_COPY_PRESETS[0].titleSuffix, preset.titleSuffix),
+      cardDescription: createCardDescription(preset),
+    }))
+    flash(`${preset.name} 카드 문구를 적용했습니다.`)
   }
 
   const resetBodyControls = () => {
@@ -324,24 +387,30 @@ function EditorApp() {
 
     setSavingShare(true)
     try {
+      const shareForm = withGeneratedCardCopy(form)
       try {
         let cardImage = ''
+        let restoreCardImage = null
         try {
+          restoreCardImage = await prepareDownloadCard(previewRef.current)
+          const cardImageHeight = Math.ceil(previewRef.current.scrollHeight)
           cardImage = await toJpeg(previewRef.current, {
             cacheBust: true,
-            quality: 0.82,
+            quality: 0.86,
             pixelRatio: 1,
             width: 720,
-            height: 900,
+            height: cardImageHeight,
           })
         } catch (error) {
           console.warn('Card preview image generation failed', error)
+        } finally {
+          if (restoreCardImage) restoreCardImage()
         }
 
         const response = await fetch(`${API_ORIGIN}/api/ads`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...form, cardImage }),
+          body: JSON.stringify({ ...shareForm, cardImage }),
         })
         const result = await response.json().catch(() => ({}))
 
@@ -361,7 +430,7 @@ function EditorApp() {
         }
       }
 
-      const fallbackLink = createLegacyShareLink(form)
+      const fallbackLink = createLegacyShareLink(shareForm)
       setShareLink(fallbackLink)
       setShareMode('legacy')
       return { link: fallbackLink, fallback: true }
@@ -494,16 +563,35 @@ function EditorApp() {
             </label>
             <label>
               <span>밴드 카드 제목</span>
-              <input value={form.cardTitle} onChange={update('cardTitle')} placeholder="밴드 미리보기에 표시할 제목" />
+              <input
+                value={form.cardTitle}
+                onChange={update('cardTitle')}
+                maxLength="120"
+                placeholder={createCardTitle(form.title)}
+              />
             </label>
             <label className="wide-field">
               <span>밴드 카드 설명</span>
               <input
                 value={form.cardDescription}
                 onChange={update('cardDescription')}
-                placeholder="클릭하면 모집 내용을 확인하고 전화·문자 문의할 수 있습니다."
+                maxLength="180"
+                placeholder={createCardDescription()}
               />
             </label>
+            <div className="card-copy-presets wide-field">
+              <div>
+                <strong>밴드카드 추천 문구</strong>
+                <small>비워두면 공유 시 광고 제목 기준으로 자동 생성됩니다.</small>
+              </div>
+              <div className="card-copy-preset-buttons">
+                {CARD_COPY_PRESETS.map((preset) => (
+                  <button type="button" key={preset.id} onClick={() => applyCardCopyPreset(preset)}>
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+            </div>
             <label className="wide-field">
               <span>긴 광고 텍스트</span>
               <small>밴드에 올릴 문구를 줄바꿈 그대로 붙여넣으세요.</small>

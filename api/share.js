@@ -3,8 +3,8 @@ import { getRedis } from './_redis.js'
 
 const { decompressFromEncodedURIComponent } = LZString
 
-const DEFAULT_TITLE = '건설현장 구인 광고'
-const DEFAULT_DESCRIPTION = '클릭하면 모집 내용을 확인하고 전화·문자 문의할 수 있습니다.'
+const DEFAULT_TITLE = '건설현장 인력 모집｜당일지급 조공·기공·반장 모집'
+const DEFAULT_DESCRIPTION = '출퇴근 가능 · 안전벨트/연장 풀착용 필수 · 클릭 후 전화/문자 바로 문의'
 const PRODUCTION_ORIGIN = 'https://ymj-people.vercel.app'
 
 function escapeHtml(value = '') {
@@ -14,6 +14,15 @@ function escapeHtml(value = '') {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;')
+}
+
+function createCardTitle(ad) {
+  const title = String(ad?.title || '').trim() || '건설현장 인력 모집'
+  return `${title}｜당일지급 조공·기공·반장 모집`
+}
+
+function createCardDescription() {
+  return DEFAULT_DESCRIPTION
 }
 
 async function loadAd(req) {
@@ -43,8 +52,8 @@ export default async function handler(req, res) {
   }
 
   const origin = PRODUCTION_ORIGIN
-  const title = escapeHtml(ad?.cardTitle || ad?.title || DEFAULT_TITLE)
-  const description = escapeHtml(ad?.cardDescription || DEFAULT_DESCRIPTION)
+  const title = escapeHtml(ad?.cardTitle || createCardTitle(ad))
+  const description = escapeHtml(ad?.cardDescription || createCardDescription())
   const legacyData = typeof req.query.data === 'string' ? req.query.data : ''
   const pageUrl = escapeHtml(id
     ? `${origin}/ad/${id}`
