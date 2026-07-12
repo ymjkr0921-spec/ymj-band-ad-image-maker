@@ -118,7 +118,6 @@ function AdCard({ form, cardRef, bodyRef, interactive = false }) {
   const bodyOffsetY = Number(form.bodyOffsetY) || 0
   const bodyFontSize = Number(form.bodyFontSize) || BODY_CONTROL_DEFAULTS.bodyFontSize
   const bodyLineHeight = lineHeights[form.bodyLineHeight] || lineHeights.normal
-  const isPhotoOriginalTemplate = template.id === 'character-photo-original'
 
   return (
     <article
@@ -135,11 +134,6 @@ function AdCard({ form, cardRef, bodyRef, interactive = false }) {
         <div className="highlight-pill">⚡ {form.highlight || '강조문구를 입력하세요'}</div>
         <h3>{form.title || '광고 제목을 입력하세요'}</h3>
         <p>건설현장 구인 · 함께 일할 분을 찾습니다</p>
-        {isPhotoOriginalTemplate && (
-          <p className="photo-template-subtitle">
-            {form.cardDescription || form.highlight || '함께 성장할 성실한 인재를 찾습니다!'}
-          </p>
-        )}
       </header>
       <div className="ad-feature-strip">
         <span><b>⛑</b>안전우선</span>
