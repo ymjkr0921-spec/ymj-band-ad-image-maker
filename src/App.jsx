@@ -153,9 +153,6 @@ function AdCard({ form, cardRef, bodyRef, interactive = false }) {
           <strong className="body-label">▣ 모집 내용</strong>
           <span>{form.body || '광고 내용을 입력하면 이곳에 표시됩니다.'}</span>
         </div>
-        <div className="ad-body-scroll-hint" aria-hidden="true">
-          내용이 길면 위아래로 밀어 확인하세요
-        </div>
       </div>
       <div className="ad-contact">
         <CallElement
@@ -224,6 +221,56 @@ function InvalidSharePage() {
       </div>
     </main>
   )
+}
+
+function nextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()))
+}
+
+async function prepareDownloadCard(card) {
+  const body = card.querySelector('.ad-body')
+  const content = card.querySelector('.ad-body-content')
+  if (!body || !content) return () => {}
+
+  const original = {
+    cardWidth: card.style.width,
+    cardHeight: card.style.height,
+    bodyMinHeight: body.style.minHeight,
+    bodyScrollTop: body.scrollTop,
+    contentFontSize: content.style.fontSize,
+  }
+
+  card.classList.add('is-exporting')
+  card.style.width = '720px'
+  card.style.height = 'auto'
+  body.scrollTop = 0
+  await nextFrame()
+
+  const minFontSize = 18
+  const currentFontSize = Number.parseFloat(window.getComputedStyle(content).fontSize) || 40
+  let nextFontSize = currentFontSize
+
+  while (nextFontSize > minFontSize && body.scrollHeight > body.clientHeight) {
+    nextFontSize -= 2
+    content.style.fontSize = `${nextFontSize}px`
+    await nextFrame()
+  }
+
+  if (body.scrollHeight > body.clientHeight) {
+    body.style.minHeight = `${Math.ceil(body.scrollHeight + 36)}px`
+    await nextFrame()
+    card.style.height = `${Math.ceil(card.scrollHeight)}px`
+    await nextFrame()
+  }
+
+  return () => {
+    card.classList.remove('is-exporting')
+    card.style.width = original.cardWidth
+    card.style.height = original.cardHeight
+    body.style.minHeight = original.bodyMinHeight
+    content.style.fontSize = original.contentFontSize
+    body.scrollTop = original.bodyScrollTop
+  }
 }
 
 function EditorApp() {
@@ -355,12 +402,15 @@ function EditorApp() {
   const downloadImage = async () => {
     if (!previewRef.current || downloading) return
     setDownloading(true)
+    let restoreDownloadCard = null
     try {
+      restoreDownloadCard = await prepareDownloadCard(previewRef.current)
+      const captureHeight = Math.ceil(previewRef.current.scrollHeight)
       const dataUrl = await toPng(previewRef.current, {
         cacheBust: true,
         pixelRatio: 2,
         width: 720,
-        height: 900,
+        height: captureHeight,
       })
       const link = document.createElement('a')
       link.download = `밴드-구인광고-${new Date().toISOString().slice(0, 10)}.png`
@@ -371,6 +421,7 @@ function EditorApp() {
       console.error(error)
       flash('이미지 저장 중 오류가 발생했습니다.')
     } finally {
+      if (restoreDownloadCard) restoreDownloadCard()
       setDownloading(false)
     }
   }
