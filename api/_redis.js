@@ -31,11 +31,26 @@ export function sanitizeAd(input) {
     'smsMessage',
     'footer',
   ]
+  const optionalStringFields = [
+    'primaryColor',
+    'secondaryColor',
+    'accentColor',
+    'backgroundColor',
+    'textColor',
+    'buttonColor',
+    'messageButtonColor',
+  ]
   const ad = {}
 
   for (const field of fields) {
     if (typeof input[field] !== 'string') return null
     ad[field] = input[field].slice(0, field === 'body' ? 12000 : 500)
+  }
+
+  for (const field of optionalStringFields) {
+    if (typeof input[field] === 'string') {
+      ad[field] = input[field].slice(0, 120)
+    }
   }
 
   const bodyOffsetY = Number(input.bodyOffsetY ?? input.bodyOffset)

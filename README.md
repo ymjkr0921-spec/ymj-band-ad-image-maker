@@ -104,3 +104,37 @@ npm run build
 ```
 
 빌드가 성공하면 GitHub에 push한 뒤 Vercel에서 배포합니다. Vercel 설정은 Framework Preset `Vite`, Build Command `npm run build`, Output Directory `dist`를 사용합니다.
+## 긴 공유 링크를 짧은 링크로 쓰는 정식 저장소 연결
+
+이 프로젝트는 기본적으로 광고 데이터를 서버 저장소에 저장한 뒤 아래 형식의 짧은 링크를 생성합니다.
+
+```text
+https://ymj-people.vercel.app/ad/8자리ID
+```
+
+저장소가 연결되지 않았거나 저장에 실패하면 기존 호환 방식인 `/ad?data=...` 긴 링크로 자동 fallback 됩니다. 따라서 앱 사용은 막히지 않지만, 밴드에 깔끔하게 올리려면 저장소 연결이 필요합니다.
+
+### 추천 저장소 옵션
+
+1. Upstash Redis Free 플랜 — 가장 쉽고 현재 코드와 바로 호환됩니다.
+2. Supabase Free 플랜 — 무료 DB는 좋지만 API 코드를 별도로 바꿔야 합니다.
+3. GitHub Gist/파일 저장 — 운영용으로는 권장하지 않습니다. 속도와 보안, 토큰 관리가 애매합니다.
+
+현재 앱은 Vercel Redis 유료 플랜을 쓰지 않고, Upstash Redis REST API 환경변수만 있으면 동작합니다.
+
+### Upstash Redis Free 연결 방법
+
+1. [Upstash](https://upstash.com)에 가입합니다.
+2. Redis Database를 생성합니다. Free 플랜으로 충분합니다.
+3. Database 상세 화면에서 REST URL과 REST TOKEN을 복사합니다.
+4. Vercel 프로젝트 `ymj-people`의 Settings → Environment Variables에 아래 값을 추가합니다.
+
+```text
+UPSTASH_REDIS_REST_URL=Upstash REST URL
+UPSTASH_REDIS_REST_TOKEN=Upstash REST TOKEN
+```
+
+5. Production 환경에 적용되도록 저장한 뒤 Vercel에서 Redeploy 합니다.
+6. 광고 만들기 화면에서 **밴드글 복사** 또는 **짧은 링크 만들기**를 누르면 `/ad/8자리ID` 링크가 생성됩니다.
+
+저장되는 데이터에는 광고 제목, 본문, 전화번호, 문자문구, 선택 템플릿, 본문 위치/글씨크기/줄간격, 밴드카드 제목/설명, 향후 색상 커스텀 값이 포함됩니다.
