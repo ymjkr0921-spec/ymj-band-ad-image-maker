@@ -59,7 +59,7 @@ export default async function handler(req, res) {
     ? `${origin}/ad/${id}`
     : `${origin}/ad${legacyData ? `?data=${encodeURIComponent(legacyData)}` : ''}`)
   const imageUrl = escapeHtml(id
-    ? `${origin}/api/ads/${id}/image`
+    ? `${origin}/og/${id}.jpg`
     : `${origin}/og-default.svg`)
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8')
@@ -77,8 +77,11 @@ export default async function handler(req, res) {
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
     <meta property="og:image" content="${imageUrl}" />
+    <meta property="og:image:secure_url" content="${imageUrl}" />
+    <meta property="og:image:type" content="${id ? 'image/jpeg' : 'image/svg+xml'}" />
     <meta property="og:image:width" content="720" />
     <meta property="og:image:height" content="900" />
+    <meta property="og:image:alt" content="${title}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${title}" />
     <meta name="twitter:description" content="${description}" />

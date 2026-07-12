@@ -1,7 +1,7 @@
 import { getRedis } from '../../_redis.js'
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') return res.status(405).end()
+  if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(405).end()
 
   const id = String(req.query.id || '')
   if (!/^[23456789A-HJ-NP-Za-km-z]{8}$/.test(id)) return res.status(400).end()
@@ -14,7 +14,9 @@ export default async function handler(req, res) {
     const base64 = dataUrl.replace(/^data:image\/jpeg;base64,/, '')
     const image = Buffer.from(base64, 'base64')
     res.setHeader('Content-Type', 'image/jpeg')
+    res.setHeader('Content-Length', String(image.length))
     res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=31536000, immutable')
+    if (req.method === 'HEAD') return res.status(200).end()
     return res.status(200).send(image)
   } catch (error) {
     console.error(error)
