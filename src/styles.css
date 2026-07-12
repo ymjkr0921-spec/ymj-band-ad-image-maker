@@ -120,29 +120,6 @@ textarea { resize: vertical; line-height: 1.65; }
 .line-spacing-control input { position: absolute; opacity: 0; pointer-events: none; }
 .line-spacing-control span { display: block; padding: 9px 6px; color: #5d6d82; font-size: 11px; font-weight: 800; text-align: center; background: white; border: 1px solid #cbd8e7; border-radius: 7px; cursor: pointer; }
 .line-spacing-control input:checked + span { color: white; background: #2472d8; border-color: #2472d8; }
-.card-copy-presets {
-  display: grid;
-  gap: 10px;
-  padding: 13px;
-  background: #fff8d7;
-  border: 1px solid #efd46c;
-  border-radius: 12px;
-}
-.card-copy-presets > div:first-child { display: grid; gap: 3px; }
-.card-copy-presets strong { font-size: 13px; }
-.card-copy-presets small { color: #766838; font-size: 10px; }
-.card-copy-preset-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
-.card-copy-preset-buttons button {
-  padding: 9px 6px;
-  color: #10203a;
-  font-size: 11px;
-  font-weight: 900;
-  background: white;
-  border: 1px solid #d8bd49;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.card-copy-preset-buttons button:active { transform: translateY(1px); }
 
 .preview-stage { padding: 10px; background: #e7ebf0; border-radius: 12px; }
 .ad-card {

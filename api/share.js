@@ -3,8 +3,8 @@ import { getRedis } from './_redis.js'
 
 const { decompressFromEncodedURIComponent } = LZString
 
-const DEFAULT_TITLE = '건설현장 인력 모집｜당일지급 조공·기공·반장 모집'
-const DEFAULT_DESCRIPTION = '출퇴근 가능 · 안전벨트/연장 풀착용 필수 · 클릭 후 전화/문자 바로 문의'
+const DEFAULT_TITLE = '\uAC74\uC124\uD604\uC7A5 \uC778\uB825 \uBAA8\uC9D1\uFF5C\uB2F9\uC77C\uC9C0\uAE09 \uC870\uACF5\u00B7\uAE30\uACF5\u00B7\uBC18\uC7A5 \uBAA8\uC9D1'
+const DEFAULT_DESCRIPTION = '\uCD9C\uD1F4\uADFC \uAC00\uB2A5 \u00B7 \uC548\uC804\uBCA8\uD2B8/\uC5F0\uC7A5 \uD480\uCC29\uC6A9 \uD544\uC218 \u00B7 \uD074\uB9AD \uD6C4 \uC804\uD654\u00B7\uBB38\uC790 \uBC14\uB85C \uBB38\uC758'
 const PRODUCTION_ORIGIN = 'https://ymj-people.vercel.app'
 
 function escapeHtml(value = '') {
@@ -17,8 +17,8 @@ function escapeHtml(value = '') {
 }
 
 function createCardTitle(ad) {
-  const title = String(ad?.title || '').trim() || '건설현장 인력 모집'
-  return `${title}｜당일지급 조공·기공·반장 모집`
+  const title = String(ad?.title || '').trim() || '\uAC74\uC124\uD604\uC7A5 \uC778\uB825 \uBAA8\uC9D1'
+  return `${title}\uFF5C\uB2F9\uC77C\uC9C0\uAE09 \uC870\uACF5\u00B7\uAE30\uACF5\u00B7\uBC18\uC7A5 \uBAA8\uC9D1`
 }
 
 function createCardDescription() {
