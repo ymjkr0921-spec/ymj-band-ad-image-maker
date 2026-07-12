@@ -71,8 +71,15 @@ export default async function handler(req, res) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b1f3a" />
     <title>${title}</title>
+    <meta name="title" content="${title}" />
     <meta name="description" content="${description}" />
+    <meta name="image" content="${imageUrl}" />
+    <meta itemprop="name" content="${title}" />
+    <meta itemprop="description" content="${description}" />
+    <meta itemprop="image" content="${imageUrl}" />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="YMJ 건설현장 구인 광고" />
+    <meta property="og:locale" content="ko_KR" />
     <meta property="og:url" content="${pageUrl}" />
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
@@ -87,6 +94,7 @@ export default async function handler(req, res) {
     <meta name="twitter:description" content="${description}" />
     <meta name="twitter:image" content="${imageUrl}" />
     <link rel="canonical" href="${pageUrl}" />
+    <link rel="image_src" href="${imageUrl}" />
     <link rel="stylesheet" href="/assets/index.css" />
   </head>
   <body>
