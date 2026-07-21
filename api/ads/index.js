@@ -1,12 +1,4 @@
-import { randomBytes } from 'node:crypto'
-import { getRedis, sanitizeAd, setCors } from '../_redis.js'
-
-const ID_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-
-function createId(length = 8) {
-  const bytes = randomBytes(length)
-  return Array.from(bytes, (byte) => ID_ALPHABET[byte % ID_ALPHABET.length]).join('')
-}
+import { createId, getRedis, sanitizeAd, setCors } from '../_redis.js'
 
 export default async function handler(req, res) {
   setCors(res)

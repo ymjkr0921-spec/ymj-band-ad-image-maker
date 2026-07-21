@@ -1,4 +1,13 @@
+import { randomBytes } from 'node:crypto'
 import { Redis } from '@upstash/redis'
+
+export const ID_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+export const ID_PATTERN = /^[23456789A-HJ-NP-Za-km-z]{8}$/
+
+export function createId(length = 8) {
+  const bytes = randomBytes(length)
+  return Array.from(bytes, (byte) => ID_ALPHABET[byte % ID_ALPHABET.length]).join('')
+}
 
 export function getRedis() {
   const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL
@@ -64,4 +73,34 @@ export function sanitizeAd(input) {
 
   if (!ad.title.trim() || !ad.body.trim() || !ad.phone.trim()) return null
   return ad
+}
+
+export function sanitizeBoard(input) {
+  if (!input || typeof input !== 'object') return null
+
+  const title = typeof input.title === 'string' ? input.title.trim().slice(0, 160) : ''
+  const description = typeof input.description === 'string' ? input.description.trim().slice(0, 300) : ''
+  const rawAds = Array.isArray(input.ads) ? input.ads : []
+
+  const ads = rawAds
+    .map((item) => {
+      const id = typeof item?.id === 'string' ? item.id.trim() : ''
+      const link = typeof item?.link === 'string' ? item.link.trim().slice(0, 300) : ''
+      return ID_PATTERN.test(id) ? { id, link } : null
+    })
+    .filter(Boolean)
+    .slice(0, 15)
+
+  if (!title || ads.length < 1) return null
+
+  const now = new Date().toISOString()
+  return {
+    title,
+    description: description || '아래 현장별 모집공고를 확인 후 전화 또는 문자로 문의 가능합니다.',
+    ads,
+    adIds: ads.map((ad) => ad.id),
+    adLinks: ads.map((ad) => ad.link),
+    createdAt: typeof input.createdAt === 'string' ? input.createdAt : now,
+    updatedAt: now,
+  }
 }

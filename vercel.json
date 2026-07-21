@@ -19,6 +19,10 @@
     {
       "source": "/og/:id.jpg",
       "destination": "/api/ads/:id/image"
+    },
+    {
+      "source": "/board/:id",
+      "destination": "/api/board-share?id=:id"
     }
   ]
 }
