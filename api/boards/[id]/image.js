@@ -1,4 +1,5 @@
 import { getRedis, ID_PATTERN } from '../../_redis.js'
+import sharp from 'sharp'
 
 function escapeXml(value = '') {
   return String(value)
@@ -48,12 +49,12 @@ export default async function handler(req, res) {
     const dataUrl = await redis.get(`board-image:${id}`)
 
     if (!dataUrl || typeof dataUrl !== 'string' || !/^data:image\/jpeg;base64,/.test(dataUrl) || dataUrl.length < 20000) {
-      const svg = Buffer.from(createFallbackSvg(board), 'utf8')
-      res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8')
-      res.setHeader('Content-Length', String(svg.length))
+      const image = await sharp(Buffer.from(createFallbackSvg(board), 'utf8')).jpeg({ quality: 92 }).toBuffer()
+      res.setHeader('Content-Type', 'image/jpeg')
+      res.setHeader('Content-Length', String(image.length))
       res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300')
       if (req.method === 'HEAD') return res.status(200).end()
-      return res.status(200).send(svg)
+      return res.status(200).send(image)
     }
 
     const base64 = dataUrl.replace(/^data:image\/jpeg;base64,/, '')
