@@ -12,7 +12,7 @@ async function loadBoardWithAds(id) {
       : []
 
   const ads = await Promise.all(
-    adIds.slice(0, 15).map(async (adId) => {
+    adIds.slice(0, 50).map(async (adId) => {
       if (!ID_PATTERN.test(String(adId))) return null
       const ad = await redis.get(`ad:${adId}`)
       return ad ? { id: adId, ad } : { id: adId, ad: null }

@@ -396,6 +396,33 @@ textarea { resize: vertical; line-height: 1.65; }
   box-shadow: 0 5px 20px rgb(15 36 64 / 6%);
 }
 .board-items { display: grid; gap: 12px; margin-top: 16px; }
+.board-list-actions {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  background: linear-gradient(135deg, #10203a, #193a66);
+  border: 2px solid #ffd43b;
+  border-radius: 13px;
+  box-shadow: 0 8px 22px rgb(15 36 64 / 12%);
+}
+.board-list-actions button {
+  width: 100%;
+  min-height: 46px;
+  color: #071321;
+  font-size: 15px;
+  font-weight: 900;
+  background: #ffd43b;
+  border: 2px solid #ffffff;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 5px 0 rgb(0 0 0 / 24%);
+}
+.board-list-actions span {
+  color: #dfe8f5;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+}
 .board-item-editor {
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);

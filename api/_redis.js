@@ -93,7 +93,7 @@ export function sanitizeBoard(input) {
       return ID_PATTERN.test(id) ? { id, link } : null
     })
     .filter(Boolean)
-    .slice(0, 15)
+    .slice(0, 50)
 
   if (ads.length < 1) return null
 

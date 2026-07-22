@@ -9,7 +9,7 @@ const PRODUCTION_ORIGIN = 'https://ymj-people.vercel.app'
 
 const STORAGE_KEY = 'ymj-band-ad-image-maker:form'
 const BOARD_STORAGE_KEY = 'ymj-band-ad-image-maker:board'
-const MAX_BOARD_ADS = 15
+const MAX_BOARD_ADS = 50
 const BOARD_DEFAULT_LABEL = 'YMJ 광고 묶음'
 const BOARD_DEFAULT_TITLE = '\uAC74\uC124\uD604\uC7A5 \uBAA8\uC9D1 \uAD11\uACE0 \uBAA8\uC74C'
 const BOARD_DEFAULT_DESCRIPTION = '\uC544\uB798 \uD604\uC7A5\uBCC4 \uBAA8\uC9D1\uACF5\uACE0\uB97C \uD655\uC778 \uD6C4 \uC804\uD654 \uB610\uB294 \uBB38\uC790\uB85C \uBB38\uC758 \uAC00\uB2A5\uD569\uB2C8\uB2E4.'
@@ -523,9 +523,13 @@ function BoardBuilder({ flash }) {
   }
 
   const addItem = () => {
-    setBoard((current) => current.items.length >= MAX_BOARD_ADS
-      ? current
-      : { ...current, items: [...current.items, { link: '', id: '', preview: null, error: '' }] })
+    setBoard((current) => {
+      if (current.items.length >= MAX_BOARD_ADS) {
+        flash('광고 묶음은 최대 50개까지 추가할 수 있습니다.')
+        return current
+      }
+      return { ...current, items: [...current.items, { link: '', id: '', preview: null, error: '' }] }
+    })
   }
 
   const removeItem = (index) => {
@@ -548,6 +552,21 @@ function BoardBuilder({ flash }) {
       return { ...current, items }
     })
     setBoardLink('')
+  }
+
+  const rotateItems = () => {
+    if (board.items.length < 2) {
+      flash('광고가 2개 이상일 때 순서 바꾸기가 가능합니다.')
+      return
+    }
+    setBoard((current) => {
+      if (current.items.length < 2) return current
+      const items = [...current.items]
+      const last = items.pop()
+      return { ...current, items: [last, ...items] }
+    })
+    setBoardLink('')
+    flash('마지막 광고를 1번으로 올렸습니다.')
   }
 
   const validItems = board.items
@@ -653,6 +672,10 @@ function BoardBuilder({ flash }) {
       </div>
 
       <div className="board-items">
+        <div className="board-list-actions">
+          <button type="button" onClick={rotateItems}>순서 바꾸기</button>
+          <span>마지막 광고가 1번으로 올라가고 나머지는 한 칸씩 내려갑니다.</span>
+        </div>
         {board.items.map((item, index) => {
           const preview = item.preview
           const phone = preview?.phone || ''
@@ -688,7 +711,7 @@ function BoardBuilder({ flash }) {
         })}
       </div>
 
-      <button className="add-board-item" type="button" onClick={addItem} disabled={board.items.length >= MAX_BOARD_ADS}>
+      <button className="add-board-item" type="button" onClick={addItem}>
         + 광고 추가
       </button>
 
