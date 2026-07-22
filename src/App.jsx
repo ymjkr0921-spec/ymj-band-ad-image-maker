@@ -346,7 +346,8 @@ function AdCard({ form, cardRef, bodyRef, interactive = false }) {
   const MessageElement = interactive ? 'a' : 'div'
   const template = getTemplate(form.templateId)
   const lineHeights = { narrow: 1.15, normal: 1.35, wide: 1.6 }
-  const bodyOffsetY = Number(form.bodyOffsetY) || 0
+  const rawBodyOffsetY = Number(form.bodyOffsetY) || 0
+  const bodyOffsetY = interactive ? Math.max(0, rawBodyOffsetY) : rawBodyOffsetY
   const bodyFontSize = Number(form.bodyFontSize) || BODY_CONTROL_DEFAULTS.bodyFontSize
   const bodyLineHeight = lineHeights[form.bodyLineHeight] || lineHeights.normal
 
@@ -407,10 +408,29 @@ function AdCard({ form, cardRef, bodyRef, interactive = false }) {
 }
 
 function SharePage({ form }) {
+  const bodyRef = useRef(null)
+  const normalizedForm = normalizeForm(form)
+
+  useEffect(() => {
+    const body = bodyRef.current
+    if (!body) return
+
+    body.scrollTop = 0
+    requestAnimationFrame(() => {
+      body.scrollTop = 0
+    })
+  }, [
+    normalizedForm.templateId,
+    normalizedForm.body,
+    normalizedForm.bodyFontSize,
+    normalizedForm.bodyLineHeight,
+    normalizedForm.bodyOffsetY,
+  ])
+
   return (
     <div className="share-page">
       <main className="share-content">
-        <AdCard form={normalizeForm(form)} interactive />
+        <AdCard form={normalizedForm} bodyRef={bodyRef} interactive />
       </main>
     </div>
   )
