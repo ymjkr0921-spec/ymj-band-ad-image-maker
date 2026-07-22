@@ -1,4 +1,4 @@
-import { getRedis, ID_PATTERN } from '../../_redis.js'
+import { BOARD_DEFAULT_LABEL, getRedis, ID_PATTERN } from '../../_redis.js'
 import sharp from 'sharp'
 
 function escapeXml(value = '') {
@@ -10,6 +10,7 @@ function escapeXml(value = '') {
 }
 
 function createFallbackSvg(board = {}) {
+  const label = escapeXml(board.boardLabel || BOARD_DEFAULT_LABEL)
   const title = escapeXml(board.title || 'YMJ 광고 묶음')
   const count = Array.isArray(board.adIds) ? board.adIds.length : 0
   const description = escapeXml(board.description || '클릭해서 전체 광고 보기 · 전화·문자 문의 가능')
@@ -18,8 +19,8 @@ function createFallbackSvg(board = {}) {
   <rect width="1200" height="630" fill="#071321"/>
   <rect x="24" y="24" width="1152" height="582" rx="28" fill="#102f58" stroke="#ffd43b" stroke-width="18"/>
   <rect x="56" y="56" width="1088" height="518" rx="20" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="4"/>
-  <rect x="76" y="72" width="266" height="64" rx="32" fill="#ffd43b"/>
-  <text x="106" y="113" font-family="system-ui, sans-serif" font-size="30" font-weight="900" fill="#071321">YMJ 광고 묶음</text>
+  <rect x="76" y="72" width="350" height="64" rx="32" fill="#ffd43b"/>
+  <text x="106" y="113" font-family="system-ui, sans-serif" font-size="30" font-weight="900" fill="#071321">${label}</text>
   <text x="80" y="220" font-family="system-ui, sans-serif" font-size="64" font-weight="900" fill="#ffffff">${title}</text>
   <text x="80" y="304" font-family="system-ui, sans-serif" font-size="30" font-weight="700" fill="#dfe8f5">${description}</text>
   <circle cx="1008" cy="164" r="108" fill="#ffd43b" stroke="#ffffff" stroke-width="8"/>

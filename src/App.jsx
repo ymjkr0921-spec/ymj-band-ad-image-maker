@@ -10,6 +10,7 @@ const PRODUCTION_ORIGIN = 'https://ymj-people.vercel.app'
 const STORAGE_KEY = 'ymj-band-ad-image-maker:form'
 const BOARD_STORAGE_KEY = 'ymj-band-ad-image-maker:board'
 const MAX_BOARD_ADS = 15
+const BOARD_DEFAULT_LABEL = 'YMJ 광고 묶음'
 const BOARD_DEFAULT_TITLE = '\uAC74\uC124\uD604\uC7A5 \uBAA8\uC9D1 \uAD11\uACE0 \uBAA8\uC74C'
 const BOARD_DEFAULT_DESCRIPTION = '\uC544\uB798 \uD604\uC7A5\uBCC4 \uBAA8\uC9D1\uACF5\uACE0\uB97C \uD655\uC778 \uD6C4 \uC804\uD654 \uB610\uB294 \uBB38\uC790\uB85C \uBB38\uC758 \uAC00\uB2A5\uD569\uB2C8\uB2E4.'
 const BODY_CONTROL_DEFAULTS = {
@@ -125,6 +126,7 @@ function extractAdId(value = '') {
 
 function createBoardDefaults() {
   return {
+    boardLabel: '',
     title: '',
     description: '',
     items: [{ link: '', id: '', preview: null, error: '' }],
@@ -137,6 +139,7 @@ function normalizeBoardDraft(data = {}) {
     : [{ link: '', id: '', preview: null, error: '' }]
 
   return {
+    boardLabel: typeof data.boardLabel === 'string' ? data.boardLabel : createBoardDefaults().boardLabel,
     title: typeof data.title === 'string' ? data.title : createBoardDefaults().title,
     description: typeof data.description === 'string' ? data.description : createBoardDefaults().description,
     items: items.slice(0, MAX_BOARD_ADS).map((item) => {
@@ -204,13 +207,14 @@ function fillRoundRect(ctx, x, y, width, height, radius) {
   ctx.fill()
 }
 
-function createBoardOgImage({ title, description, total, adTitles }) {
+function createBoardOgImage({ label, title, description, total, adTitles }) {
   const canvas = document.createElement('canvas')
   canvas.width = 1200
   canvas.height = 630
   const ctx = canvas.getContext('2d')
   if (!ctx) return ''
 
+  const safeLabel = String(label || '').trim() || BOARD_DEFAULT_LABEL
   const safeTitle = String(title || '').trim() || BOARD_DEFAULT_TITLE
   const safeDescription = String(description || '').trim() || BOARD_DEFAULT_DESCRIPTION
   const safeTotal = Math.max(0, Number(total) || 0)
@@ -246,10 +250,14 @@ function createBoardOgImage({ title, description, total, adTitles }) {
   ctx.strokeRect(56, 56, 1088, 518)
 
   ctx.fillStyle = '#ffd43b'
-  fillRoundRect(ctx, 72, 66, 260, 62, 31)
+  fillRoundRect(ctx, 72, 66, 350, 62, 31)
   ctx.fillStyle = '#071321'
   ctx.font = "900 30px system-ui, -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif"
-  ctx.fillText('YMJ 광고 묶음', 96, 107)
+  let labelText = safeLabel
+  while (labelText.length > 2 && ctx.measureText(labelText).width > 292) {
+    labelText = labelText.slice(0, -1)
+  }
+  ctx.fillText(labelText.length < safeLabel.length ? `${labelText}…` : labelText, 96, 107)
 
   ctx.fillStyle = '#ffffff'
   ctx.font = "900 64px system-ui, -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif"
@@ -453,6 +461,7 @@ function BoardBuilder({ flash }) {
 
   useEffect(() => {
     localStorage.setItem(BOARD_STORAGE_KEY, JSON.stringify({
+      boardLabel: board.boardLabel,
       title: board.title,
       description: board.description,
       items: board.items.map(({ link, id }) => ({ link, id })),
@@ -566,6 +575,7 @@ function BoardBuilder({ flash }) {
       let boardImage = ''
       try {
         boardImage = createBoardOgImage({
+          label: board.boardLabel.trim() || BOARD_DEFAULT_LABEL,
           title: board.title.trim() || BOARD_DEFAULT_TITLE,
           description: board.description.trim() || BOARD_DEFAULT_DESCRIPTION,
           total: validItems.length,
@@ -579,6 +589,7 @@ function BoardBuilder({ flash }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          boardLabel: board.boardLabel.trim() || BOARD_DEFAULT_LABEL,
           title: board.title.trim() || BOARD_DEFAULT_TITLE,
           description: board.description.trim() || BOARD_DEFAULT_DESCRIPTION,
           ads: validItems.slice(0, MAX_BOARD_ADS),
@@ -627,6 +638,10 @@ function BoardBuilder({ flash }) {
       </div>
 
       <div className="fields">
+        <label className="wide-field">
+          <span>상단 라벨 문구</span>
+          <input value={board.boardLabel} onChange={updateBoard('boardLabel')} placeholder="YMJ 광고 묶음" />
+        </label>
         <label className="wide-field">
           <span>묶음 제목</span>
           <input value={board.title} onChange={updateBoard('title')} placeholder="건설현장 모집 광고 모음" />
