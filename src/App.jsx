@@ -298,6 +298,7 @@ function BoardBuilder({ flash }) {
   const [board, setBoard] = useState(loadBoardDraft)
   const [boardLink, setBoardLink] = useState('')
   const [savingBoard, setSavingBoard] = useState(false)
+  const boardOgRef = useRef(null)
 
   useEffect(() => {
     localStorage.setItem(BOARD_STORAGE_KEY, JSON.stringify({
@@ -397,6 +398,10 @@ function BoardBuilder({ flash }) {
     .filter((item) => item.id)
 
   const boardPost = createBoardBandPost(board, boardLink || '묶음 링크를 먼저 저장해 주세요.')
+  const ogPreviewAds = validItems.slice(0, 3).map((item) => {
+    const source = board.items.find((next) => next.id === item.id)
+    return source?.preview?.cardTitle || source?.preview?.title || `광고 ID ${item.id}`
+  })
 
   const saveBoard = async () => {
     if (savingBoard) return
@@ -407,6 +412,21 @@ function BoardBuilder({ flash }) {
 
     setSavingBoard(true)
     try {
+      let boardImage = ''
+      try {
+        if (boardOgRef.current) {
+          boardImage = await toJpeg(boardOgRef.current, {
+            cacheBust: true,
+            quality: 0.9,
+            pixelRatio: 1,
+            width: 1200,
+            height: 630,
+          })
+        }
+      } catch (error) {
+        console.warn('Board preview image generation failed', error)
+      }
+
       const response = await fetch(`${API_ORIGIN}/api/boards`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -414,6 +434,7 @@ function BoardBuilder({ flash }) {
           title: board.title.trim() || BOARD_DEFAULT_TITLE,
           description: board.description.trim() || BOARD_DEFAULT_DESCRIPTION,
           ads: validItems.slice(0, MAX_BOARD_ADS),
+          boardImage,
         }),
       })
       const result = await response.json().catch(() => ({}))
@@ -522,7 +543,32 @@ function BoardBuilder({ flash }) {
           {boardLink ? <a href={boardLink} target="_blank" rel="noreferrer">묶음 페이지 열기</a> : <button type="button" disabled>묶음 페이지 열기</button>}
         </div>
       </div>
+      <BoardOgPreview
+        refNode={boardOgRef}
+        title={board.title.trim() || BOARD_DEFAULT_TITLE}
+        description={board.description.trim() || BOARD_DEFAULT_DESCRIPTION}
+        total={validItems.length}
+        adTitles={ogPreviewAds}
+      />
     </section>
+  )
+}
+
+function BoardOgPreview({ refNode, title, description, total, adTitles }) {
+  return (
+    <div className="board-og-capture" ref={refNode} aria-hidden="true">
+      <div className="board-og-frame">
+        <p>YMJ 광고 묶음</p>
+        <h2>{title}</h2>
+        <span>{description}</span>
+        <strong>총 {total}개 모집공고</strong>
+        <ol>
+          {adTitles.map((adTitle, index) => <li key={`${index}-${adTitle}`}>{adTitle}</li>)}
+        </ol>
+        {total > 3 && <b>+ 외 {total - 3}개 더보기</b>}
+        <small>클릭 후 전체 광고 보기 · 전화/문자 문의 가능</small>
+      </div>
+    </div>
   )
 }
 

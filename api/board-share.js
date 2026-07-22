@@ -1,8 +1,6 @@
-import { getRedis, ID_PATTERN } from './_redis.js'
+import { BOARD_DEFAULT_DESCRIPTION, BOARD_DEFAULT_TITLE, getRedis, ID_PATTERN } from './_redis.js'
 
 const PRODUCTION_ORIGIN = 'https://ymj-people.vercel.app'
-const DEFAULT_TITLE = '건설현장 모집 광고 모음'
-const DEFAULT_DESCRIPTION = '아래 현장별 모집공고를 확인 후 전화 또는 문자로 문의 가능합니다.'
 
 function escapeHtml(value = '') {
   return String(value)
@@ -29,12 +27,11 @@ export default async function handler(req, res) {
     console.error(error)
   }
 
-  const title = escapeHtml(board?.title || DEFAULT_TITLE)
-  const description = escapeHtml(board?.description || DEFAULT_DESCRIPTION)
-  const firstAdId = Array.isArray(board?.adIds) && ID_PATTERN.test(String(board.adIds[0])) ? board.adIds[0] : ''
+  const title = escapeHtml(board?.title || BOARD_DEFAULT_TITLE)
+  const description = escapeHtml(board?.description || BOARD_DEFAULT_DESCRIPTION)
   const pageUrl = escapeHtml(`${PRODUCTION_ORIGIN}/board/${id}`)
-  const imageUrl = escapeHtml(firstAdId ? `${PRODUCTION_ORIGIN}/og/${firstAdId}.jpg` : `${PRODUCTION_ORIGIN}/og-default.svg`)
-  const imageType = firstAdId ? 'image/jpeg' : 'image/svg+xml'
+  const imageUrl = escapeHtml(ID_PATTERN.test(id) ? `${PRODUCTION_ORIGIN}/board-og/${id}.jpg` : `${PRODUCTION_ORIGIN}/og-default.svg`)
+  const imageType = ID_PATTERN.test(id) ? 'image/jpeg' : 'image/svg+xml'
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8')
   res.setHeader('Cache-Control', board ? 'public, max-age=60, s-maxage=300' : 'public, max-age=0, must-revalidate')
@@ -52,7 +49,7 @@ export default async function handler(req, res) {
     <meta itemprop="description" content="${description}" />
     <meta itemprop="image" content="${imageUrl}" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="YMJ 건설현장 구인 광고" />
+    <meta property="og:site_name" content="YMJ &#xAC74;&#xC124;&#xD604;&#xC7A5; &#xAD6C;&#xC778; &#xAD11;&#xACE0;" />
     <meta property="og:locale" content="ko_KR" />
     <meta property="og:url" content="${pageUrl}" />
     <meta property="og:title" content="${title}" />
@@ -60,8 +57,8 @@ export default async function handler(req, res) {
     <meta property="og:image" content="${imageUrl}" />
     <meta property="og:image:secure_url" content="${imageUrl}" />
     <meta property="og:image:type" content="${imageType}" />
-    <meta property="og:image:width" content="720" />
-    <meta property="og:image:height" content="900" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="${title}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${title}" />
