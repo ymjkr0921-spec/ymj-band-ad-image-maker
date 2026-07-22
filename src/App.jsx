@@ -730,13 +730,14 @@ function BoardPage({ boardId }) {
 
   if (state.loading) return <main className="share-loading">광고 묶음을 불러오는 중입니다.</main>
   if (!state.board) return <InvalidSharePage />
+  const boardLabel = String(state.board.boardLabel || '').trim() || BOARD_DEFAULT_LABEL
   const boardTitle = String(state.board.title || '').trim() || BOARD_DEFAULT_TITLE
   const boardDescription = String(state.board.description || '').trim() || BOARD_DEFAULT_DESCRIPTION
 
   return (
     <main className="board-page">
       <section className="board-hero">
-        <p>YMJ 광고 묶음</p>
+        <p>{boardLabel}</p>
         <h1>{boardTitle}</h1>
         <span>{boardDescription}</span>
         <small>현장별 모집공고를 확인 후 전화 또는 문자로 바로 문의하세요.</small>
