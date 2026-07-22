@@ -12,6 +12,7 @@ export default async function handler(req, res) {
     if (!board) return res.status(400).json({ error: '\uBB36\uC74C \uC815\uBCF4\uB97C \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.' })
     const boardImage = typeof input.boardImage === 'string' &&
       /^data:image\/jpeg;base64,/.test(input.boardImage) &&
+      input.boardImage.length >= 20000 &&
       input.boardImage.length <= 1500000
       ? input.boardImage
       : ''

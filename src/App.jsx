@@ -155,6 +155,158 @@ function loadBoardDraft() {
   }
 }
 
+function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+  const words = String(text || '').split(/\s+/).filter(Boolean)
+  const lines = []
+  let line = ''
+
+  for (const word of words) {
+    const testLine = line ? `${line} ${word}` : word
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      lines.push(line)
+      line = word
+      if (lines.length >= maxLines) break
+    } else {
+      line = testLine
+    }
+  }
+
+  if (line && lines.length < maxLines) lines.push(line)
+
+  lines.forEach((nextLine, index) => {
+    const isLast = index === maxLines - 1 && words.length > 0 && lines.length === maxLines
+    let output = nextLine
+    if (isLast && ctx.measureText(output).width > maxWidth) {
+      while (output.length > 2 && ctx.measureText(`${output}…`).width > maxWidth) {
+        output = output.slice(0, -1)
+      }
+      output = `${output}…`
+    }
+    ctx.fillText(output, x, y + index * lineHeight)
+  })
+
+  return y + lines.length * lineHeight
+}
+
+function fillRoundRect(ctx, x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2)
+  ctx.beginPath()
+  ctx.moveTo(x + r, y)
+  ctx.lineTo(x + width - r, y)
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r)
+  ctx.lineTo(x + width, y + height - r)
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height)
+  ctx.lineTo(x + r, y + height)
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r)
+  ctx.lineTo(x, y + r)
+  ctx.quadraticCurveTo(x, y, x + r, y)
+  ctx.closePath()
+  ctx.fill()
+}
+
+function createBoardOgImage({ title, description, total, adTitles }) {
+  const canvas = document.createElement('canvas')
+  canvas.width = 1200
+  canvas.height = 630
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return ''
+
+  const safeTitle = String(title || '').trim() || BOARD_DEFAULT_TITLE
+  const safeDescription = String(description || '').trim() || BOARD_DEFAULT_DESCRIPTION
+  const safeTotal = Math.max(0, Number(total) || 0)
+  const list = adTitles.length ? adTitles : ['현장별 모집공고를 확인해 주세요.']
+
+  ctx.fillStyle = '#071321'
+  ctx.fillRect(0, 0, 1200, 630)
+
+  const bg = ctx.createLinearGradient(0, 0, 1200, 630)
+  bg.addColorStop(0, '#071321')
+  bg.addColorStop(0.55, '#12345a')
+  bg.addColorStop(1, '#071321')
+  ctx.fillStyle = bg
+  ctx.fillRect(0, 0, 1200, 630)
+
+  ctx.fillStyle = 'rgba(255, 212, 59, 0.10)'
+  for (let x = -620; x < 1240; x += 56) {
+    ctx.save()
+    ctx.translate(x, 0)
+    ctx.rotate(-Math.PI / 5)
+    ctx.fillRect(0, -80, 18, 920)
+    ctx.restore()
+  }
+
+  ctx.strokeStyle = '#ffd43b'
+  ctx.lineWidth = 18
+  ctx.strokeRect(18, 18, 1164, 594)
+  ctx.strokeStyle = '#071321'
+  ctx.lineWidth = 10
+  ctx.strokeRect(36, 36, 1128, 558)
+  ctx.strokeStyle = 'rgba(255,255,255,0.24)'
+  ctx.lineWidth = 4
+  ctx.strokeRect(56, 56, 1088, 518)
+
+  ctx.fillStyle = '#ffd43b'
+  fillRoundRect(ctx, 72, 66, 260, 62, 31)
+  ctx.fillStyle = '#071321'
+  ctx.font = "900 30px system-ui, -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif"
+  ctx.fillText('YMJ 광고 묶음', 96, 107)
+
+  ctx.fillStyle = '#ffffff'
+  ctx.font = "900 64px system-ui, -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif"
+  drawWrappedText(ctx, safeTitle, 78, 194, 770, 72, 2)
+
+  ctx.fillStyle = '#dfe8f5'
+  ctx.font = "700 28px system-ui, -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif"
+  drawWrappedText(ctx, safeDescription, 80, 336, 790, 38, 2)
+
+  ctx.fillStyle = '#ffd43b'
+  ctx.beginPath()
+  ctx.arc(1010, 166, 108, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.strokeStyle = '#ffffff'
+  ctx.lineWidth = 8
+  ctx.stroke()
+  ctx.fillStyle = '#071321'
+  ctx.textAlign = 'center'
+  ctx.font = "900 34px system-ui, -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif"
+  ctx.fillText('총', 1010, 140)
+  ctx.font = "900 56px system-ui, -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif"
+  ctx.fillText(String(safeTotal), 1010, 196)
+  ctx.font = "900 30px system-ui, -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif"
+  ctx.fillText('개 모집공고', 1010, 236)
+  ctx.textAlign = 'left'
+
+  ctx.font = "900 28px system-ui, -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif"
+  list.slice(0, 3).forEach((adTitle, index) => {
+    const y = 422 + index * 54
+    ctx.fillStyle = '#ffffff'
+    fillRoundRect(ctx, 80, y - 34, 770, 42, 12)
+    ctx.fillStyle = '#d70816'
+    ctx.fillText(`${index + 1}.`, 104, y - 5)
+    ctx.fillStyle = '#071321'
+    const text = String(adTitle || '').trim()
+    let output = text
+    while (output.length > 2 && ctx.measureText(output).width > 650) {
+      output = output.slice(0, -1)
+    }
+    ctx.fillText(output.length < text.length ? `${output}…` : output, 154, y - 5)
+  })
+
+  if (safeTotal > 3) {
+    ctx.fillStyle = '#ffd43b'
+    ctx.font = "900 27px system-ui, -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif"
+    ctx.fillText(`+ 외 ${safeTotal - 3}개 더보기`, 880, 466)
+  }
+
+  ctx.fillStyle = '#ffd43b'
+  ctx.font = "900 29px system-ui, -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif"
+  ctx.textAlign = 'center'
+  ctx.fillText('클릭 후 전체 광고 보기 · 전화/문자 문의 가능', 600, 570)
+  ctx.textAlign = 'left'
+
+  return canvas.toDataURL('image/jpeg', 0.92)
+}
+
 function readSharedForm() {
   try {
     const payload = new URLSearchParams(window.location.search).get('data')
@@ -298,7 +450,6 @@ function BoardBuilder({ flash }) {
   const [board, setBoard] = useState(loadBoardDraft)
   const [boardLink, setBoardLink] = useState('')
   const [savingBoard, setSavingBoard] = useState(false)
-  const boardOgRef = useRef(null)
 
   useEffect(() => {
     localStorage.setItem(BOARD_STORAGE_KEY, JSON.stringify({
@@ -414,15 +565,12 @@ function BoardBuilder({ flash }) {
     try {
       let boardImage = ''
       try {
-        if (boardOgRef.current) {
-          boardImage = await toJpeg(boardOgRef.current, {
-            cacheBust: true,
-            quality: 0.9,
-            pixelRatio: 1,
-            width: 1200,
-            height: 630,
-          })
-        }
+        boardImage = createBoardOgImage({
+          title: board.title.trim() || BOARD_DEFAULT_TITLE,
+          description: board.description.trim() || BOARD_DEFAULT_DESCRIPTION,
+          total: validItems.length,
+          adTitles: ogPreviewAds,
+        })
       } catch (error) {
         console.warn('Board preview image generation failed', error)
       }
@@ -543,32 +691,7 @@ function BoardBuilder({ flash }) {
           {boardLink ? <a href={boardLink} target="_blank" rel="noreferrer">묶음 페이지 열기</a> : <button type="button" disabled>묶음 페이지 열기</button>}
         </div>
       </div>
-      <BoardOgPreview
-        refNode={boardOgRef}
-        title={board.title.trim() || BOARD_DEFAULT_TITLE}
-        description={board.description.trim() || BOARD_DEFAULT_DESCRIPTION}
-        total={validItems.length}
-        adTitles={ogPreviewAds}
-      />
     </section>
-  )
-}
-
-function BoardOgPreview({ refNode, title, description, total, adTitles }) {
-  return (
-    <div className="board-og-capture" ref={refNode} aria-hidden="true">
-      <div className="board-og-frame">
-        <p>YMJ 광고 묶음</p>
-        <h2>{title}</h2>
-        <span>{description}</span>
-        <strong>총 {total}개 모집공고</strong>
-        <ol>
-          {adTitles.map((adTitle, index) => <li key={`${index}-${adTitle}`}>{adTitle}</li>)}
-        </ol>
-        {total > 3 && <b>+ 외 {total - 3}개 더보기</b>}
-        <small>클릭 후 전체 광고 보기 · 전화/문자 문의 가능</small>
-      </div>
-    </div>
   )
 }
 
