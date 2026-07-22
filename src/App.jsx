@@ -667,7 +667,7 @@ function BoardBuilder({ flash }) {
   }
 
   return (
-    <section className="board-builder" aria-labelledby="board-builder-title">
+    <section className="board-builder" id="board-maker" aria-labelledby="board-builder-title">
       <div className="section-heading">
         <div>
           <p className="step">STEP 03</p>
@@ -1021,14 +1021,77 @@ function EditorApp() {
   return (
     <div className="app-shell">
       <header className="site-header">
-        <div className="brand-mark">Y</div>
-        <div>
-          <p className="eyebrow">YMJ BAND AD MAKER</p>
-          <h1>밴드 광고 이미지 만들기</h1>
-        </div>
+        <a className="site-brand" href="#home" aria-label="YMJ 광고등록 서비스 홈">
+          <div className="brand-mark">Y</div>
+          <div>
+            <p className="eyebrow">YMJ PEOPLE</p>
+            <h1>YMJ 광고등록 서비스</h1>
+          </div>
+        </a>
+        <nav className="site-nav" aria-label="주요 메뉴">
+          <a href="#home">홈</a>
+          <a href="#ad-maker">광고 만들기</a>
+          <a href="#board-maker">광고 묶음 만들기</a>
+          <a href="#how-to-use">사용 방법</a>
+        </nav>
       </header>
 
-      <main className="workspace">
+      <section className="home-hero" id="home">
+        <div className="hero-copy">
+          <p className="eyebrow">CONSTRUCTION RECRUIT AD SERVICE</p>
+          <h2>건설현장 모집광고를<br />이미지, 링크, 묶음페이지로 쉽게 제작합니다.</h2>
+          <p>
+            밴드에 올릴 광고를 빠르게 만들고, 광고를 클릭한 사람이 전화·문자 문의까지 바로 연결할 수 있습니다.
+          </p>
+          <div className="hero-actions">
+            <a href="#ad-maker">광고 만들기 시작</a>
+            <a href="#board-maker">광고 묶음 만들기</a>
+          </div>
+        </div>
+        <div className="hero-panel" aria-label="서비스 요약">
+          <strong>YMJ 광고 운영 도구</strong>
+          <span>/ad/8자리ID 개별 광고</span>
+          <span>/board/8자리ID 묶음 페이지</span>
+          <span>전화·문자 문의 바로 연결</span>
+        </div>
+      </section>
+
+      <section className="feature-section" aria-labelledby="feature-title">
+        <div className="homepage-heading">
+          <p className="step">SERVICE</p>
+          <h2 id="feature-title">주요 기능</h2>
+        </div>
+        <div className="feature-grid">
+          <article>
+            <span>01</span>
+            <h3>광고 이미지 제작</h3>
+            <p>현장명과 모집내용을 입력하면 밴드용 광고 이미지를 만들 수 있습니다.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>짧은 광고 링크</h3>
+            <p>광고마다 /ad/8자리ID 링크가 생성됩니다.</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>광고 묶음 페이지</h3>
+            <p>여러 광고를 하나의 /board 링크로 묶어 보여줄 수 있습니다.</p>
+          </article>
+          <article>
+            <span>04</span>
+            <h3>전화·문자 문의 연결</h3>
+            <p>광고를 클릭한 사람이 바로 전화 또는 문자 문의를 할 수 있습니다.</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="maker-section" id="ad-maker" aria-labelledby="ad-maker-title">
+        <div className="homepage-heading">
+          <p className="step">MAKE AD</p>
+          <h2 id="ad-maker-title">광고 만들기</h2>
+          <span>Step 1. 광고 내용 입력 → Step 2. 템플릿 선택 → Step 3. 미리보기 → Step 4. 다운로드/공유</span>
+        </div>
+        <main className="workspace">
         <section className="editor-panel" aria-labelledby="editor-title">
           <div className="section-heading">
             <div>
@@ -1241,8 +1304,31 @@ function EditorApp() {
             </button>
           </div>
         </section>
-      </main>
-      <BoardBuilder flash={flash} />
+        </main>
+      </section>
+
+      <section className="board-home-section" aria-labelledby="board-maker-title">
+        <div className="homepage-heading">
+          <p className="step">BOARD MAKER</p>
+          <h2 id="board-maker-title">광고 묶음 만들기</h2>
+          <span>여러 개별 광고 링크를 최대 50개까지 모아 하나의 묶음 페이지로 저장합니다.</span>
+        </div>
+        <BoardBuilder flash={flash} />
+      </section>
+
+      <section className="how-to-section" id="how-to-use" aria-labelledby="how-to-title">
+        <div className="homepage-heading">
+          <p className="step">GUIDE</p>
+          <h2 id="how-to-title">사용 방법</h2>
+        </div>
+        <ol className="how-to-list">
+          <li><strong>1단계.</strong> 광고 내용을 입력합니다.</li>
+          <li><strong>2단계.</strong> 광고 이미지를 확인합니다.</li>
+          <li><strong>3단계.</strong> 밴드글을 복사합니다.</li>
+          <li><strong>4단계.</strong> 여러 광고는 묶음으로 저장합니다.</li>
+          <li><strong>5단계.</strong> 밴드에 붙여넣고 게시합니다.</li>
+        </ol>
+      </section>
       <div className={`toast ${notice ? 'show' : ''}`} role="status">{notice}</div>
     </div>
   )
