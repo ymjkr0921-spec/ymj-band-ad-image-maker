@@ -10,6 +10,8 @@ const PRODUCTION_ORIGIN = 'https://ymj-people.vercel.app'
 const STORAGE_KEY = 'ymj-band-ad-image-maker:form'
 const BOARD_STORAGE_KEY = 'ymj-band-ad-image-maker:board'
 const MAX_BOARD_ADS = 15
+const BOARD_DEFAULT_TITLE = '\uAC74\uC124\uD604\uC7A5 \uBAA8\uC9D1 \uAD11\uACE0 \uBAA8\uC74C'
+const BOARD_DEFAULT_DESCRIPTION = '\uC544\uB798 \uD604\uC7A5\uBCC4 \uBAA8\uC9D1\uACF5\uACE0\uB97C \uD655\uC778 \uD6C4 \uC804\uD654 \uB610\uB294 \uBB38\uC790\uB85C \uBB38\uC758 \uAC00\uB2A5\uD569\uB2C8\uB2E4.'
 const BODY_CONTROL_DEFAULTS = {
   bodyOffsetY: 20,
   bodyFontSize: 40,
@@ -110,7 +112,9 @@ function createBandPost(form, shareLink) {
 }
 
 function createBoardBandPost(board, boardLink) {
-  return `?? ${board.title || '?? ??'}\n?? ?? ???? ??? ???? ?? ? ????? ?? ?????.\n\n${boardLink}`
+  const title = String(board.title || '').trim() || BOARD_DEFAULT_TITLE
+  const description = String(board.description || '').trim() || BOARD_DEFAULT_DESCRIPTION
+  return `\uD83D\uDCE2 ${title}\n\uD83D\uDC47 ${description}\n\n${boardLink}`
 }
 
 function extractAdId(value = '') {
@@ -121,8 +125,8 @@ function extractAdId(value = '') {
 
 function createBoardDefaults() {
   return {
-    title: '\uAC80\uB2E8\uC2E0\uB3C4\uC2DC \uAC74\uC124\uD604\uC7A5 \uBAA8\uC9D1 \uAD11\uACE0 \uBAA8\uC74C',
-    description: '\uC544\uB798 \uD604\uC7A5\uBCC4 \uBAA8\uC9D1\uACF5\uACE0\uB97C \uD655\uC778 \uD6C4 \uC804\uD654 \uB610\uB294 \uBB38\uC790\uB85C \uBB38\uC758 \uAC00\uB2A5\uD569\uB2C8\uB2E4.',
+    title: '',
+    description: '',
     items: [{ link: '', id: '', preview: null, error: '' }],
   }
 }
@@ -396,10 +400,6 @@ function BoardBuilder({ flash }) {
 
   const saveBoard = async () => {
     if (savingBoard) return
-    if (!board.title.trim()) {
-      flash('묶음 제목을 입력해 주세요.')
-      return
-    }
     if (validItems.length < 1) {
       flash('광고 링크를 1개 이상 입력해 주세요.')
       return
@@ -411,8 +411,8 @@ function BoardBuilder({ flash }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: board.title,
-          description: board.description,
+          title: board.title.trim() || BOARD_DEFAULT_TITLE,
+          description: board.description.trim() || BOARD_DEFAULT_DESCRIPTION,
           ads: validItems.slice(0, MAX_BOARD_ADS),
         }),
       })
@@ -460,7 +460,7 @@ function BoardBuilder({ flash }) {
       <div className="fields">
         <label className="wide-field">
           <span>묶음 제목</span>
-          <input value={board.title} onChange={updateBoard('title')} placeholder="검단신도시 건설현장 모집 광고 모음" />
+          <input value={board.title} onChange={updateBoard('title')} placeholder="건설현장 모집 광고 모음" />
         </label>
         <label className="wide-field">
           <span>묶음 설명</span>
@@ -546,13 +546,15 @@ function BoardPage({ boardId }) {
 
   if (state.loading) return <main className="share-loading">광고 묶음을 불러오는 중입니다.</main>
   if (!state.board) return <InvalidSharePage />
+  const boardTitle = String(state.board.title || '').trim() || BOARD_DEFAULT_TITLE
+  const boardDescription = String(state.board.description || '').trim() || BOARD_DEFAULT_DESCRIPTION
 
   return (
     <main className="board-page">
       <section className="board-hero">
         <p>YMJ 광고 묶음</p>
-        <h1>{state.board.title}</h1>
-        <span>{state.board.description}</span>
+        <h1>{boardTitle}</h1>
+        <span>{boardDescription}</span>
         <small>현장별 모집공고를 확인 후 전화 또는 문자로 바로 문의하세요.</small>
       </section>
       <section className="board-card-list">

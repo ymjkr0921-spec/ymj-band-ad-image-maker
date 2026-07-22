@@ -3,6 +3,8 @@ import { Redis } from '@upstash/redis'
 
 export const ID_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 export const ID_PATTERN = /^[23456789A-HJ-NP-Za-km-z]{8}$/
+export const BOARD_DEFAULT_TITLE = '\uAC74\uC124\uD604\uC7A5 \uBAA8\uC9D1 \uAD11\uACE0 \uBAA8\uC74C'
+export const BOARD_DEFAULT_DESCRIPTION = '\uC544\uB798 \uD604\uC7A5\uBCC4 \uBAA8\uC9D1\uACF5\uACE0\uB97C \uD655\uC778 \uD6C4 \uC804\uD654 \uB610\uB294 \uBB38\uC790\uB85C \uBB38\uC758 \uAC00\uB2A5\uD569\uB2C8\uB2E4.'
 
 export function createId(length = 8) {
   const bytes = randomBytes(length)
@@ -91,12 +93,12 @@ export function sanitizeBoard(input) {
     .filter(Boolean)
     .slice(0, 15)
 
-  if (!title || ads.length < 1) return null
+  if (ads.length < 1) return null
 
   const now = new Date().toISOString()
   return {
-    title,
-    description: description || '아래 현장별 모집공고를 확인 후 전화 또는 문자로 문의 가능합니다.',
+    title: title || BOARD_DEFAULT_TITLE,
+    description: description || BOARD_DEFAULT_DESCRIPTION,
     ads,
     adIds: ads.map((ad) => ad.id),
     adLinks: ads.map((ad) => ad.link),
