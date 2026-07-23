@@ -3,6 +3,7 @@ import { Redis } from '@upstash/redis'
 
 export const ID_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 export const ID_PATTERN = /^[23456789A-HJ-NP-Za-km-z]{8}$/
+export const BOARD_INDEX_KEY = 'boards:index'
 export const BOARD_DEFAULT_LABEL = 'YMJ 광고 묶음'
 export const BOARD_DEFAULT_TITLE = '\uAC74\uC124\uD604\uC7A5 \uBAA8\uC9D1 \uAD11\uACE0 \uBAA8\uC74C'
 export const BOARD_DEFAULT_DESCRIPTION = '\uC544\uB798 \uD604\uC7A5\uBCC4 \uBAA8\uC9D1\uACF5\uACE0\uB97C \uD655\uC778 \uD6C4 \uC804\uD654 \uB610\uB294 \uBB38\uC790\uB85C \uBB38\uC758 \uAC00\uB2A5\uD569\uB2C8\uB2E4.'
@@ -25,7 +26,7 @@ export function getRedis() {
 
 export function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 }
 
@@ -84,6 +85,9 @@ export function sanitizeBoard(input) {
   const title = typeof input.title === 'string' ? input.title.trim().slice(0, 160) : ''
   const description = typeof input.description === 'string' ? input.description.trim().slice(0, 300) : ''
   const boardLabel = typeof input.boardLabel === 'string' ? input.boardLabel.trim().slice(0, 60) : ''
+  const boardCode = typeof input.boardCode === 'string' ? input.boardCode.trim().slice(0, 40) : ''
+  const boardName = typeof input.boardName === 'string' ? input.boardName.trim().slice(0, 120) : ''
+  const category = typeof input.category === 'string' ? input.category.trim().slice(0, 120) : ''
   const rawAds = Array.isArray(input.ads) ? input.ads : []
 
   const ads = rawAds
@@ -100,6 +104,9 @@ export function sanitizeBoard(input) {
   const now = new Date().toISOString()
   return {
     boardLabel: boardLabel || BOARD_DEFAULT_LABEL,
+    boardCode,
+    boardName: boardName || title || BOARD_DEFAULT_TITLE,
+    category,
     title: title || BOARD_DEFAULT_TITLE,
     description: description || BOARD_DEFAULT_DESCRIPTION,
     ads,

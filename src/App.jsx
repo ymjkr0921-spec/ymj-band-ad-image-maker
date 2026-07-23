@@ -126,6 +126,10 @@ function extractAdId(value = '') {
 
 function createBoardDefaults() {
   return {
+    boardId: '',
+    boardCode: '',
+    boardName: '',
+    category: '',
     boardLabel: '',
     title: '',
     description: '',
@@ -139,6 +143,10 @@ function normalizeBoardDraft(data = {}) {
     : [{ link: '', id: '', preview: null, error: '' }]
 
   return {
+    boardId: typeof data.boardId === 'string' ? data.boardId : createBoardDefaults().boardId,
+    boardCode: typeof data.boardCode === 'string' ? data.boardCode : createBoardDefaults().boardCode,
+    boardName: typeof data.boardName === 'string' ? data.boardName : createBoardDefaults().boardName,
+    category: typeof data.category === 'string' ? data.category : createBoardDefaults().category,
     boardLabel: typeof data.boardLabel === 'string' ? data.boardLabel : createBoardDefaults().boardLabel,
     title: typeof data.title === 'string' ? data.title : createBoardDefaults().title,
     description: typeof data.description === 'string' ? data.description : createBoardDefaults().description,
@@ -474,19 +482,55 @@ function InvalidSharePage() {
   )
 }
 
-function BoardBuilder({ flash }) {
+function BoardBuilder({ flash, editingBoard, onSaved }) {
   const [board, setBoard] = useState(loadBoardDraft)
   const [boardLink, setBoardLink] = useState('')
   const [savingBoard, setSavingBoard] = useState(false)
 
   useEffect(() => {
     localStorage.setItem(BOARD_STORAGE_KEY, JSON.stringify({
+      boardId: board.boardId,
+      boardCode: board.boardCode,
+      boardName: board.boardName,
+      category: board.category,
       boardLabel: board.boardLabel,
       title: board.title,
       description: board.description,
       items: board.items.map(({ link, id }) => ({ link, id })),
     }))
   }, [board])
+
+  useEffect(() => {
+    if (!editingBoard) return
+    const items = Array.isArray(editingBoard.ads) && editingBoard.ads.length
+      ? editingBoard.ads.map((item) => ({
+        link: item.link || createShortShareLink(item.id),
+        id: item.id,
+        preview: null,
+        error: '',
+      }))
+      : Array.isArray(editingBoard.adIds) && editingBoard.adIds.length
+        ? editingBoard.adIds.map((id, index) => ({
+          link: editingBoard.adLinks?.[index] || createShortShareLink(id),
+          id,
+          preview: null,
+          error: '',
+        }))
+      : [{ link: '', id: '', preview: null, error: '' }]
+
+    setBoard(normalizeBoardDraft({
+      boardId: editingBoard.boardId,
+      boardCode: editingBoard.boardCode,
+      boardName: editingBoard.boardName,
+      category: editingBoard.category,
+      boardLabel: editingBoard.boardLabel,
+      title: editingBoard.title,
+      description: editingBoard.description,
+      items,
+    }))
+    setBoardLink(createBoardLink(editingBoard.boardId))
+    flash('묶음 정보를 수정 화면에 불러왔습니다.')
+  }, [editingBoard])
 
   useEffect(() => {
     let active = true
@@ -589,6 +633,12 @@ function BoardBuilder({ flash }) {
     flash('마지막 광고를 1번으로 올렸습니다.')
   }
 
+  const resetBoardForm = () => {
+    setBoard(createBoardDefaults())
+    setBoardLink('')
+    flash('새 광고 묶음을 작성할 수 있습니다.')
+  }
+
   const validItems = board.items
     .map((item) => {
       const id = item.id || extractAdId(item.link)
@@ -624,10 +674,14 @@ function BoardBuilder({ flash }) {
         console.warn('Board preview image generation failed', error)
       }
 
-      const response = await fetch(`${API_ORIGIN}/api/boards`, {
-        method: 'POST',
+      const isEditing = Boolean(board.boardId)
+      const response = await fetch(`${API_ORIGIN}/api/boards${isEditing ? `/${board.boardId}` : ''}`, {
+        method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          boardCode: board.boardCode.trim(),
+          boardName: board.boardName.trim(),
+          category: board.category.trim(),
           boardLabel: board.boardLabel.trim() || BOARD_DEFAULT_LABEL,
           title: board.title.trim() || BOARD_DEFAULT_TITLE,
           description: board.description.trim() || BOARD_DEFAULT_DESCRIPTION,
@@ -640,8 +694,10 @@ function BoardBuilder({ flash }) {
         throw new Error(result.error || 'SAVE_FAILED')
       }
       const nextLink = createBoardLink(result.id)
+      setBoard((current) => ({ ...current, boardId: result.id }))
       setBoardLink(nextLink)
-      flash('광고 묶음 링크를 만들었습니다.')
+      if (onSaved) onSaved()
+      flash(isEditing ? '광고 묶음을 수정했습니다.' : '광고 묶음 링크를 만들었습니다.')
       return nextLink
     } catch (error) {
       console.error(error)
@@ -673,10 +729,25 @@ function BoardBuilder({ flash }) {
           <p className="step">STEP 03</p>
           <h2 id="board-builder-title">광고 묶음 만들기</h2>
         </div>
-        <span className="ratio-badge">최대 {MAX_BOARD_ADS}개</span>
+        <div className="board-heading-actions">
+          {board.boardId && <button type="button" onClick={resetBoardForm}>새 묶음 작성</button>}
+          <span className="ratio-badge">최대 {MAX_BOARD_ADS}개</span>
+        </div>
       </div>
 
       <div className="fields">
+        <label>
+          <span>묶음 코드</span>
+          <input value={board.boardCode} onChange={updateBoard('boardCode')} placeholder="SYSTEM, FORM, WALL" />
+        </label>
+        <label>
+          <span>공종/분류</span>
+          <input value={board.category} onChange={updateBoard('category')} placeholder="시스템광고, 형틀광고, 벽체광고" />
+        </label>
+        <label className="wide-field">
+          <span>묶음 이름</span>
+          <input value={board.boardName} onChange={updateBoard('boardName')} placeholder="1번 코드 시스템광고" />
+        </label>
         <label className="wide-field">
           <span>상단 라벨 문구</span>
           <input value={board.boardLabel} onChange={updateBoard('boardLabel')} placeholder="YMJ 광고 묶음" />
@@ -749,6 +820,145 @@ function BoardBuilder({ flash }) {
           {boardLink ? <a href={boardLink} target="_blank" rel="noreferrer">묶음 페이지 열기</a> : <button type="button" disabled>묶음 페이지 열기</button>}
         </div>
       </div>
+    </section>
+  )
+}
+
+function formatDate(value) {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+  return date.toLocaleString('ko-KR', {
+    year: '2-digit',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function BoardList({ flash, onEdit, refreshKey }) {
+  const [state, setState] = useState({ loading: true, boards: [] })
+
+  const loadBoards = () => {
+    setState((current) => ({ ...current, loading: true }))
+    fetch(`${API_ORIGIN}/api/boards`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error('LOAD_FAILED')
+        return response.json()
+      })
+      .then((payload) => setState({ loading: false, boards: Array.isArray(payload.boards) ? payload.boards : [] }))
+      .catch((error) => {
+        console.error(error)
+        setState({ loading: false, boards: [] })
+        flash('광고 묶음 목록을 불러오지 못했습니다.')
+      })
+  }
+
+  useEffect(() => {
+    loadBoards()
+  }, [refreshKey])
+
+  const copyBoardLinkById = async (boardId) => {
+    const link = createBoardLink(boardId)
+    await navigator.clipboard.writeText(link)
+    flash('묶음 링크를 복사했습니다.')
+  }
+
+  const copyBoardPostBySummary = async (board) => {
+    const link = createBoardLink(board.boardId)
+    await navigator.clipboard.writeText(createBoardBandPost(board, link))
+    flash('밴드용 묶음글을 복사했습니다.')
+  }
+
+  const editBoard = async (boardId) => {
+    try {
+      const response = await fetch(`${API_ORIGIN}/api/boards/${boardId}`)
+      if (!response.ok) throw new Error('LOAD_FAILED')
+      const payload = await response.json()
+      onEdit(payload.board)
+      window.location.hash = 'board-maker'
+    } catch (error) {
+      console.error(error)
+      flash('수정할 묶음 정보를 불러오지 못했습니다.')
+    }
+  }
+
+  const rotateBoard = async (boardId) => {
+    try {
+      const response = await fetch(`${API_ORIGIN}/api/boards/${boardId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'rotate' }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'ROTATE_FAILED')
+      flash('묶음 광고 순서를 바꿨습니다.')
+      loadBoards()
+    } catch (error) {
+      console.error(error)
+      flash(error.message || '순서 바꾸기를 처리하지 못했습니다.')
+    }
+  }
+
+  const deleteBoard = async (boardId) => {
+    if (!window.confirm('이 광고 묶음을 삭제할까요? /board 링크도 더 이상 사용할 수 없습니다.')) return
+    try {
+      const response = await fetch(`${API_ORIGIN}/api/boards/${boardId}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error('DELETE_FAILED')
+      flash('광고 묶음을 삭제했습니다.')
+      loadBoards()
+    } catch (error) {
+      console.error(error)
+      flash('광고 묶음을 삭제하지 못했습니다.')
+    }
+  }
+
+  return (
+    <section className="board-list-manager" id="board-list" aria-labelledby="board-list-title">
+      <div className="section-heading">
+        <div>
+          <p className="step">SERVER BOARD LIST</p>
+          <h2 id="board-list-title">광고 묶음 목록</h2>
+        </div>
+        <button type="button" onClick={loadBoards}>새로고침</button>
+      </div>
+      <p className="board-list-help">PC와 핸드폰 어디서 접속해도 Upstash Redis에 저장된 같은 묶음 목록을 불러옵니다.</p>
+
+      {state.loading ? (
+        <div className="board-list-empty">광고 묶음 목록을 불러오는 중입니다.</div>
+      ) : state.boards.length ? (
+        <div className="board-list-grid">
+          {state.boards.map((board, index) => {
+            const link = createBoardLink(board.boardId)
+            return (
+              <article className="board-list-card" key={board.boardId}>
+                <div className="board-list-rank">{index + 1}</div>
+                <div className="board-list-info">
+                  <div className="board-list-meta">
+                    <span>{board.boardCode || 'NO CODE'}</span>
+                    <span>{board.category || '분류 없음'}</span>
+                  </div>
+                  <h3>{board.boardName || board.title || '광고 묶음'}</h3>
+                  <p>{board.title || '묶음 제목 없음'}</p>
+                  <small>{board.adCount || 0}개 광고 · 생성 {formatDate(board.createdAt)} · 수정 {formatDate(board.updatedAt)}</small>
+                  <a href={link} target="_blank" rel="noreferrer">{link}</a>
+                </div>
+                <div className="board-list-actions">
+                  <a href={link} target="_blank" rel="noreferrer">묶음 열기</a>
+                  <button type="button" onClick={() => editBoard(board.boardId)}>묶음 수정</button>
+                  <button type="button" onClick={() => rotateBoard(board.boardId)}>순서 바꾸기</button>
+                  <button type="button" onClick={() => copyBoardLinkById(board.boardId)}>묶음 링크 복사</button>
+                  <button type="button" onClick={() => copyBoardPostBySummary(board)}>밴드용 묶음글 복사</button>
+                  <button type="button" className="danger" onClick={() => deleteBoard(board.boardId)}>삭제</button>
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="board-list-empty">아직 서버에 저장된 광고 묶음이 없습니다.</div>
+      )}
     </section>
   )
 }
@@ -869,6 +1079,8 @@ function EditorApp() {
   const [shareLink, setShareLink] = useState('')
   const [shareMode, setShareMode] = useState('')
   const [savingShare, setSavingShare] = useState(false)
+  const [editingBoard, setEditingBoard] = useState(null)
+  const [boardListVersion, setBoardListVersion] = useState(0)
   const previewRef = useRef(null)
 
   const cleanPhone = normalizePhone(form.phone)
@@ -1032,6 +1244,7 @@ function EditorApp() {
           <a href="#home">홈</a>
           <a href="#ad-maker">광고 만들기</a>
           <a href="#board-maker">광고 묶음 만들기</a>
+          <a href="#board-list">광고 묶음 목록</a>
           <a href="#how-to-use">사용 방법</a>
         </nav>
       </header>
@@ -1313,7 +1526,16 @@ function EditorApp() {
           <h2 id="board-maker-title">광고 묶음 만들기</h2>
           <span>여러 개별 광고 링크를 최대 50개까지 모아 하나의 묶음 페이지로 저장합니다.</span>
         </div>
-        <BoardBuilder flash={flash} />
+        <BoardBuilder
+          flash={flash}
+          editingBoard={editingBoard}
+          onSaved={() => setBoardListVersion((version) => version + 1)}
+        />
+        <BoardList
+          flash={flash}
+          refreshKey={boardListVersion}
+          onEdit={(board) => setEditingBoard({ ...board, loadedAt: Date.now() })}
+        />
       </section>
 
       <section className="how-to-section" id="how-to-use" aria-labelledby="how-to-title">

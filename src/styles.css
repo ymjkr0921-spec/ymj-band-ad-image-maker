@@ -230,6 +230,17 @@ h1 { margin: 2px 0 0; font-size: 19px; line-height: 1.2; }
 .section-heading h2 { margin: 3px 0 0; font-size: 20px; }
 .save-state { color: #277a4d; font-size: 12px; font-weight: 700; }
 .ratio-badge { padding: 5px 10px; color: #52647d; font-size: 12px; font-weight: 800; background: #edf1f6; border-radius: 20px; }
+.board-heading-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: end; }
+.board-heading-actions button {
+  padding: 7px 10px;
+  color: #10203a;
+  font-size: 12px;
+  font-weight: 900;
+  background: #ffd43b;
+  border: 1px solid #e2b900;
+  border-radius: 999px;
+  cursor: pointer;
+}
 
 .fields { display: grid; gap: 16px; }
 .template-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e3e8ef; }
@@ -665,6 +676,122 @@ textarea { resize: vertical; line-height: 1.65; }
 .board-result textarea { margin-top: 8px; font-size: 12px; background: #fff; }
 .board-result .share-link-actions { grid-template-columns: 1fr 1fr; }
 
+.board-list-manager {
+  width: min(100% - 32px, 1260px);
+  margin: 18px auto 28px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #dfe5ed;
+  border-radius: 16px;
+  box-shadow: 0 5px 20px rgb(15 36 64 / 6%);
+}
+.board-list-manager .section-heading button {
+  padding: 9px 12px;
+  color: #10203a;
+  font-size: 12px;
+  font-weight: 900;
+  background: #ffd43b;
+  border: 1px solid #e2b900;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.board-list-help {
+  margin: -5px 0 14px;
+  color: #66778e;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+.board-list-grid { display: grid; gap: 12px; }
+.board-list-card {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 10px;
+  padding: 13px;
+  background: #f7f9fc;
+  border: 1px solid #dce5ef;
+  border-radius: 14px;
+}
+.board-list-rank {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: #0b1f3a;
+  font-size: 18px;
+  font-weight: 900;
+  background: #ffd43b;
+  border: 2px solid #0b1f3a;
+  border-radius: 10px;
+}
+.board-list-info,
+.board-list-actions { grid-column: 2; }
+.board-list-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.board-list-meta span {
+  padding: 4px 8px;
+  color: #0b1f3a;
+  font-size: 11px;
+  font-weight: 900;
+  background: #edf1f6;
+  border-radius: 999px;
+}
+.board-list-info h3 { margin: 8px 0 4px; color: #10203a; font-size: 17px; }
+.board-list-info p { margin: 0 0 6px; color: #42536a; font-size: 13px; font-weight: 800; line-height: 1.45; }
+.board-list-info small { display: block; color: #6b7d93; font-size: 11px; font-weight: 800; line-height: 1.5; }
+.board-list-info a {
+  display: block;
+  margin-top: 7px;
+  color: #2472d8;
+  font-size: 11px;
+  font-weight: 900;
+  word-break: break-all;
+}
+.board-list-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.board-list-actions a,
+.board-list-actions button {
+  display: grid;
+  min-height: 39px;
+  place-items: center;
+  padding: 9px 7px;
+  color: #10203a;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid #cbd8e7;
+  border-radius: 9px;
+  cursor: pointer;
+}
+.board-list-actions a:first-child {
+  color: white;
+  background: #2472d8;
+  border-color: #2472d8;
+}
+.board-list-actions .danger {
+  color: white;
+  background: #d70816;
+  border-color: #d70816;
+}
+.board-list-empty {
+  padding: 24px 16px;
+  color: #66778e;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+  background: #f7f9fc;
+  border: 1px dashed #cbd8e7;
+  border-radius: 13px;
+}
+
 .board-page {
   min-height: 100vh;
   padding: 14px;
@@ -747,6 +874,9 @@ textarea { resize: vertical; line-height: 1.65; }
   .hero-actions { display: flex; }
   .hero-actions a { min-width: 190px; padding-inline: 22px; }
   .feature-grid { grid-template-columns: repeat(4, 1fr); }
+  .board-list-card { grid-template-columns: 52px minmax(0, 1fr) 420px; align-items: center; }
+  .board-list-info { grid-column: 2; }
+  .board-list-actions { grid-column: 3; grid-template-columns: 1fr 1fr; }
   .workspace { grid-template-columns: minmax(0, 1fr) minmax(380px, .82fr); align-items: start; padding: 24px; }
   .fields { grid-template-columns: 1fr 1fr; }
   .wide-field { grid-column: 1 / -1; }
