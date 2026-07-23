@@ -355,7 +355,7 @@ function AdCard({ form, cardRef, bodyRef, interactive = false }) {
   const template = getTemplate(form.templateId)
   const lineHeights = { narrow: 1.15, normal: 1.35, wide: 1.6 }
   const rawBodyOffsetY = Number(form.bodyOffsetY) || 0
-  const bodyOffsetY = interactive ? Math.max(0, rawBodyOffsetY) : rawBodyOffsetY
+  const bodyOffsetY = Math.max(0, rawBodyOffsetY)
   const bodyFontSize = Number(form.bodyFontSize) || BODY_CONTROL_DEFAULTS.bodyFontSize
   const bodyLineHeight = lineHeights[form.bodyLineHeight] || lineHeights.normal
 
@@ -1098,6 +1098,15 @@ function EditorApp() {
     setShareLink('')
     setShareMode('')
   }, [form])
+
+  useEffect(() => {
+    const body = previewRef.current?.querySelector('.ad-body')
+    if (!body) return
+    body.scrollTop = 0
+    requestAnimationFrame(() => {
+      body.scrollTop = 0
+    })
+  }, [form.body, form.templateId, form.bodyFontSize, form.bodyLineHeight, form.bodyOffsetY])
 
   const update = (key) => (event) => {
     const value = event.target.type === 'range' ? Number(event.target.value) : event.target.value
