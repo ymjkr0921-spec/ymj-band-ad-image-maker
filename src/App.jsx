@@ -377,9 +377,9 @@ function AdCard({ form, cardRef, bodyRef, interactive = false }) {
       </header>
       <div className="ad-feature-strip">
         <span><b>⛑</b>안전우선</span>
-        <span><b>₩</b>당일지급</span>
+        <span><b>⇄</b>출퇴근가능</span>
         <span><b>♟</b>팀원모집</span>
-        <span><b>✓</b>초보가능</span>
+        <span><b>★</b>경력우대</span>
       </div>
       <div className="ad-body" ref={bodyRef}>
         <div
